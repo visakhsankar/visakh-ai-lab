@@ -75,15 +75,16 @@ def render_pipeline(pipeline_stage: int) -> None:
             </div>
             """
 
-    st.markdown(
-        f"""
+    raw = f"""
         <div style="background:linear-gradient(135deg,#f8fafc,#f1f5f9);
                     border:1px solid #e2e8f0;border-radius:14px;
                     padding:20px 32px;display:flex;align-items:flex-start;
                     justify-content:center;flex-wrap:wrap;gap:4px;margin:12px 0 20px">
           {stages_html}
         </div>
-        """,
+        """
+    st.markdown(
+        "\n".join(line for line in raw.splitlines() if line.strip()),
         unsafe_allow_html=True,
     )
 
