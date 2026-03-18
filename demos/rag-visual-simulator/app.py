@@ -39,6 +39,20 @@ if not os.getenv("OPENAI_API_KEY"):
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
+# ─── Config ───────────────────────────────────────────────────────────────────
+MAX_FILE_MB = 5
+MAX_QUESTIONS = 10
+
+# ─── Session State Init ───────────────────────────────────────────────────────
+_SS_KEYS = ["chunks", "index", "embeddings", "raw_text", "chunk_settings"]
+for k in _SS_KEYS:
+    if k not in st.session_state:
+        st.session_state[k] = None
+if "question_count" not in st.session_state:
+    st.session_state.question_count = 0
+if "author_mode" not in st.session_state:
+    st.session_state.author_mode = False
+
 # ─── Sidebar ─────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown("## ⚙️ Pipeline Settings")
@@ -104,20 +118,6 @@ st.caption(
     "chunks, embeds, retrieves, and answers — step by step."
 )
 st.divider()
-
-# ─── Config ───────────────────────────────────────────────────────────────────
-MAX_FILE_MB = 5
-MAX_QUESTIONS = 10
-
-# ─── Session State Init ───────────────────────────────────────────────────────
-_SS_KEYS = ["chunks", "index", "embeddings", "raw_text", "chunk_settings"]
-for k in _SS_KEYS:
-    if k not in st.session_state:
-        st.session_state[k] = None
-if "question_count" not in st.session_state:
-    st.session_state.question_count = 0
-if "author_mode" not in st.session_state:
-    st.session_state.author_mode = False
 
 # ─── Upload ───────────────────────────────────────────────────────────────────
 uploaded_file = st.file_uploader(
