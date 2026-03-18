@@ -71,7 +71,7 @@ def render_pipeline(pipeline_stage: int) -> None:
             stages_html += f"""
             <div style="color:{arrow_color};font-size:22px;margin:0 2px;
                         padding-bottom:20px;align-self:flex-start;padding-top:13px">
-              →
+              &#8594;
             </div>
             """
 
