@@ -81,8 +81,18 @@ with st.sidebar:
         help="Retrieval-Augmented Generation grounds LLM answers in source material.",
     )
     st.divider()
-    remaining = MAX_QUESTIONS - st.session_state.question_count
-    st.caption(f"Questions remaining this session: **{remaining}/{MAX_QUESTIONS}**")
+    if st.session_state.author_mode:
+        st.caption("🔓 **Author mode** — no limits active")
+    else:
+        remaining = MAX_QUESTIONS - st.session_state.question_count
+        st.caption(f"Questions remaining this session: **{remaining}/{MAX_QUESTIONS}**")
+        with st.expander("🔑 Author access"):
+            pw = st.text_input("Password", type="password", label_visibility="collapsed")
+            if pw and pw == st.secrets.get("AUTHOR_PASSWORD", ""):
+                st.session_state.author_mode = True
+                st.rerun()
+            elif pw:
+                st.caption("Incorrect password.")
     st.divider()
     st.caption("RAG Visual Simulator · v2.0")
     st.caption("by [Visakh Sankar](https://visakhsankar.com)")
@@ -106,6 +116,8 @@ for k in _SS_KEYS:
         st.session_state[k] = None
 if "question_count" not in st.session_state:
     st.session_state.question_count = 0
+if "author_mode" not in st.session_state:
+    st.session_state.author_mode = False
 
 # ─── Upload ───────────────────────────────────────────────────────────────────
 uploaded_file = st.file_uploader(
@@ -115,7 +127,7 @@ uploaded_file = st.file_uploader(
 )
 
 # ─── File Size Guard ──────────────────────────────────────────────────────────
-if uploaded_file and uploaded_file.size > MAX_FILE_MB * 1024 * 1024:
+if uploaded_file and not st.session_state.author_mode and uploaded_file.size > MAX_FILE_MB * 1024 * 1024:
     st.error(
         f"⚠️ File too large ({uploaded_file.size / 1024 / 1024:.1f} MB). "
         f"Please upload a file under {MAX_FILE_MB} MB for this demo."
@@ -219,7 +231,7 @@ if st.session_state.chunks is not None:
     )
 
     if question:
-        if st.session_state.question_count >= MAX_QUESTIONS:
+        if not st.session_state.author_mode and st.session_state.question_count >= MAX_QUESTIONS:
             st.warning(
                 f"🔒 Demo limit reached — {MAX_QUESTIONS} questions per session. "
                 "Refresh the page to start a new session."
