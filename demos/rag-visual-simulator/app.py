@@ -224,11 +224,15 @@ if st.session_state.chunks is not None:
 
     # ─── Question ────────────────────────────────────────────────────────────
     st.subheader("💬 Ask a Question")
-    question = st.text_input(
-        "",
-        placeholder="e.g. What are the main findings? What does the document say about X?",
-        label_visibility="collapsed",
-    )
+    with st.form("question_form"):
+        question = st.text_input(
+            "",
+            placeholder="e.g. What are the main findings? What does the document say about X?",
+            label_visibility="collapsed",
+        )
+        submitted = st.form_submit_button("Ask")
+
+    question = question if submitted else None
 
     if question:
         if not st.session_state.author_mode and st.session_state.question_count >= MAX_QUESTIONS:
@@ -255,7 +259,7 @@ if st.session_state.chunks is not None:
     # Pipeline visualization — rendered after stage is finalised
     render_pipeline(pipeline_stage)
 
-    if question and st.session_state.question_count <= MAX_QUESTIONS:
+    if question:
         # ── Retrieved Chunks ─────────────────────────────────────────────────
         st.subheader(f"🎯 Top {top_k} Retrieved Chunks")
         st.caption(
