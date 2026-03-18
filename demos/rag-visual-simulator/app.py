@@ -81,6 +81,9 @@ with st.sidebar:
         help="Retrieval-Augmented Generation grounds LLM answers in source material.",
     )
     st.divider()
+    remaining = MAX_QUESTIONS - st.session_state.question_count
+    st.caption(f"Questions remaining this session: **{remaining}/{MAX_QUESTIONS}**")
+    st.divider()
     st.caption("RAG Visual Simulator · v2.0")
     st.caption("by [Visakh Sankar](https://visakhsankar.com)")
 
@@ -92,11 +95,17 @@ st.caption(
 )
 st.divider()
 
+# ─── Config ───────────────────────────────────────────────────────────────────
+MAX_FILE_MB = 5
+MAX_QUESTIONS = 10
+
 # ─── Session State Init ───────────────────────────────────────────────────────
 _SS_KEYS = ["chunks", "index", "embeddings", "raw_text", "chunk_settings"]
 for k in _SS_KEYS:
     if k not in st.session_state:
         st.session_state[k] = None
+if "question_count" not in st.session_state:
+    st.session_state.question_count = 0
 
 # ─── Upload ───────────────────────────────────────────────────────────────────
 uploaded_file = st.file_uploader(
@@ -104,6 +113,14 @@ uploaded_file = st.file_uploader(
     type=["pdf", "txt"],
     help="Your file is processed locally — nothing is stored.",
 )
+
+# ─── File Size Guard ──────────────────────────────────────────────────────────
+if uploaded_file and uploaded_file.size > MAX_FILE_MB * 1024 * 1024:
+    st.error(
+        f"⚠️ File too large ({uploaded_file.size / 1024 / 1024:.1f} MB). "
+        f"Please upload a file under {MAX_FILE_MB} MB for this demo."
+    )
+    st.stop()
 
 # Detect when we need to re-process (new file or changed chunk settings)
 settings_key = (
@@ -202,22 +219,31 @@ if st.session_state.chunks is not None:
     )
 
     if question:
-        # Retrieve
-        with st.spinner("🔍 Retrieving relevant chunks…"):
-            retrieved = retrieve_chunks(
-                client, question, chunks, st.session_state.index, top_k=top_k
+        if st.session_state.question_count >= MAX_QUESTIONS:
+            st.warning(
+                f"🔒 Demo limit reached — {MAX_QUESTIONS} questions per session. "
+                "Refresh the page to start a new session."
             )
-        pipeline_stage = 3
+            question = None
+        else:
+            st.session_state.question_count += 1
 
-        # Generate answer
-        with st.spinner("💬 Generating answer…"):
-            answer = generate_answer(client, question, retrieved)
-        pipeline_stage = 4
+            # Retrieve
+            with st.spinner("🔍 Retrieving relevant chunks…"):
+                retrieved = retrieve_chunks(
+                    client, question, chunks, st.session_state.index, top_k=top_k
+                )
+            pipeline_stage = 3
+
+            # Generate answer
+            with st.spinner("💬 Generating answer…"):
+                answer = generate_answer(client, question, retrieved)
+            pipeline_stage = 4
 
     # Pipeline visualization — rendered after stage is finalised
     render_pipeline(pipeline_stage)
 
-    if question:
+    if question and st.session_state.question_count <= MAX_QUESTIONS:
         # ── Retrieved Chunks ─────────────────────────────────────────────────
         st.subheader(f"🎯 Top {top_k} Retrieved Chunks")
         st.caption(
