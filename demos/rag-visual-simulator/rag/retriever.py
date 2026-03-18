@@ -24,7 +24,7 @@ def retrieve_chunks(
 ) -> List[dict]:
     """Retrieve the top-k most relevant chunks for a question."""
     q_vec = get_embeddings(client, [question])
-    distances, indices = index.search(q_vec, top_k)
+    distances, indices = index.search(q_vec, min(top_k, index.ntotal))
 
     results = []
     for rank, idx in enumerate(indices[0]):
