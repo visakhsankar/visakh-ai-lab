@@ -124,6 +124,26 @@ with col_h2:
 
 st.markdown("---")
 
+# ─── Sidebar ──────────────────────────────────────────────────────────────────────
+with st.sidebar:
+    st.markdown("## ⚙️ Session Info")
+    st.divider()
+    if st.session_state.author_mode:
+        st.caption("🔓 **Author mode** — no limits active")
+    else:
+        remaining = MAX_ANALYSES - st.session_state.analysis_count
+        st.caption(f"Analyses remaining this session: **{remaining}/{MAX_ANALYSES}**")
+        with st.expander("🔑 Author access"):
+            pw = st.text_input("Password", type="password", label_visibility="collapsed")
+            if pw and pw == st.secrets.get("AUTHOR_PASSWORD", ""):
+                st.session_state.author_mode = True
+                st.rerun()
+            elif pw:
+                st.caption("Incorrect password.")
+    st.divider()
+    st.caption("AI Architecture Simulator · v1.0")
+    st.caption("by [Visakh Sankar](https://visakhsankar.com)")
+
 # ─── Example use cases ───────────────────────────────────────────────────────────
 EXAMPLES = [
     (
@@ -151,11 +171,18 @@ EXAMPLES = [
     ),
 ]
 
+# ─── Config ───────────────────────────────────────────────────────────────────────
+MAX_ANALYSES = 5
+
 # ─── Session state defaults ───────────────────────────────────────────────────────
 if "user_input" not in st.session_state:
     st.session_state.user_input = ""
 if "result_ready" not in st.session_state:
     st.session_state.result_ready = False
+if "analysis_count" not in st.session_state:
+    st.session_state.analysis_count = 0
+if "author_mode" not in st.session_state:
+    st.session_state.author_mode = False
 
 # ─── Input ────────────────────────────────────────────────────────────────────────
 st.markdown('<div class="section-label">Your Use Case</div>', unsafe_allow_html=True)
@@ -185,10 +212,18 @@ with btn_col:
 
 # ─── Analysis ─────────────────────────────────────────────────────────────────────
 if analyze and user_input.strip():
+    if not st.session_state.author_mode and st.session_state.analysis_count >= MAX_ANALYSES:
+        st.warning(
+            f"🔒 Demo limit reached — {MAX_ANALYSES} analyses per session. "
+            "Refresh the page to start a new session."
+        )
+        st.stop()
+
     if not os.environ.get("OPENAI_API_KEY"):
         st.error("⚠️  OPENAI_API_KEY is not set. Add it to your `.env` file or environment.")
         st.stop()
 
+    st.session_state.analysis_count += 1
     patterns = load_pattern_library()
     st.markdown("---")
 

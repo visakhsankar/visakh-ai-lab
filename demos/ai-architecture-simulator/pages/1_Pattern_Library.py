@@ -67,8 +67,19 @@ st.markdown(
     unsafe_allow_html=True,
 )
 st.markdown(
-    f'<p style="color:{_MUTED};font-size:1.05rem;margin-bottom:0;">'
+    f'<p style="color:{_MUTED};font-size:1.05rem;margin-bottom:12px;">'
     f"All <strong>{len(patterns)}</strong> AI architecture patterns — scores, trade-offs, stacks, and when to use each one.</p>",
+    unsafe_allow_html=True,
+)
+st.markdown(
+    f"""
+    <div style="display:inline-flex;align-items:center;gap:8px;background:#eff6ff;
+                border:1px solid #bfdbfe;border-radius:20px;padding:6px 16px;margin-bottom:4px;">
+      <span style="font-size:14px;">🚀</span>
+      <span style="font-size:13px;color:#1d4ed8;font-weight:600;">Starter Pack</span>
+      <span style="font-size:13px;color:{_MUTED};">— {len(patterns)} patterns included · more being added regularly</span>
+    </div>
+    """,
     unsafe_allow_html=True,
 )
 st.markdown("---")
@@ -190,11 +201,13 @@ else:
             )
 
             with col:
-                # Card header
+                # Card — fixed min-height keeps paired cards even
                 st.markdown(
                     f"""
                     <div style="background:#fff;border:1px solid {_BORDER};border-radius:12px;
-                                padding:18px 20px;box-shadow:0 2px 6px rgba(0,0,0,0.04);margin-bottom:4px;">
+                                padding:18px 20px;box-shadow:0 2px 6px rgba(0,0,0,0.04);
+                                margin-bottom:4px;min-height:540px;
+                                display:flex;flex-direction:column;">
                       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
                         <div>
                           <h3 style="margin:0 0 3px 0;color:{_TEXT};font-size:17px;">{p["name"]}</h3>
@@ -202,14 +215,15 @@ else:
                         </div>
                         <span style="background:{s_color}18;border:1px solid {s_color};border-radius:20px;
                                      padding:3px 10px;font-size:11px;font-weight:700;color:{s_color};
-                                     white-space:nowrap;">{s_label}</span>
+                                     white-space:nowrap;flex-shrink:0;margin-left:8px;">{s_label}</span>
                       </div>
-                      <p style="color:#374151;font-size:13px;line-height:1.6;margin-bottom:12px;">{p["description"]}</p>
+                      <p style="color:#374151;font-size:13px;line-height:1.6;margin-bottom:12px;
+                                min-height:60px;">{p["description"]}</p>
                       <div style="display:flex;gap:16px;margin-bottom:12px;">
                         <span style="font-size:12px;color:{_TEXT};">⏱️ {p["build_time"]}</span>
                         <span style="font-size:12px;color:{_TEXT};">👥 {p["team_needs"].split("+")[0].strip()}</span>
                       </div>
-                      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px;">
+                      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px;min-height:90px;">
                         <div>
                           <div style="font-size:11px;color:{_MUTED};text-transform:uppercase;
                                       letter-spacing:1px;margin-bottom:5px;">Best for</div>
@@ -221,7 +235,7 @@ else:
                           <ul style="margin:0;padding:0;list-style:none;">{weak_html}</ul>
                         </div>
                       </div>
-                      <div style="margin-top:8px;">
+                      <div style="margin-top:auto;padding-top:8px;">
                         {score_bars(p["scores"])}
                       </div>
                       <div style="margin-top:10px;padding-top:10px;border-top:1px solid {_BORDER};">
