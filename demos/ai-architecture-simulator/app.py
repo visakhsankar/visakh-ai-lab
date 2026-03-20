@@ -124,6 +124,19 @@ with col_h2:
 
 st.markdown("---")
 
+# ─── Config ───────────────────────────────────────────────────────────────────────
+MAX_ANALYSES = 5
+
+# ─── Session state defaults ───────────────────────────────────────────────────────
+if "user_input" not in st.session_state:
+    st.session_state.user_input = ""
+if "result_ready" not in st.session_state:
+    st.session_state.result_ready = False
+if "analysis_count" not in st.session_state:
+    st.session_state.analysis_count = 0
+if "author_mode" not in st.session_state:
+    st.session_state.author_mode = False
+
 # ─── Sidebar ──────────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown("## ⚙️ Session Info")
@@ -170,19 +183,6 @@ EXAMPLES = [
         "2 data engineers but no ML specialists.",
     ),
 ]
-
-# ─── Config ───────────────────────────────────────────────────────────────────────
-MAX_ANALYSES = 5
-
-# ─── Session state defaults ───────────────────────────────────────────────────────
-if "user_input" not in st.session_state:
-    st.session_state.user_input = ""
-if "result_ready" not in st.session_state:
-    st.session_state.result_ready = False
-if "analysis_count" not in st.session_state:
-    st.session_state.analysis_count = 0
-if "author_mode" not in st.session_state:
-    st.session_state.author_mode = False
 
 # ─── Input ────────────────────────────────────────────────────────────────────────
 st.markdown('<div class="section-label">Your Use Case</div>', unsafe_allow_html=True)
