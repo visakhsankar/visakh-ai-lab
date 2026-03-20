@@ -1,4 +1,5 @@
 const RAG_SIMULATOR_URL = "https://visakh-ai-lab-mgbbdk4k9rk8gmkk4ey4tp.streamlit.app/";
+const AI_ARCH_SIMULATOR_URL = "https://visakh-ai-lab-nzsdsdjsm45vyayjpvgfmk.streamlit.app/";
 
 interface Build {
   title: string;
@@ -20,9 +21,10 @@ const BUILDS: Build[] = [
   {
     title: "AI Architecture Simulator",
     description:
-      "An interactive tool that recommends AI architecture patterns based on enterprise needs and constraints.",
-    tags: ["Architecture", "Decision Tools"],
-    live: false,
+      "Describe your enterprise use case and get an expert architecture recommendation with live reasoning, trade-off analysis, and an architecture brief.",
+    tags: ["Architecture", "LLM", "Decision Tools", "Streamlit"],
+    href: AI_ARCH_SIMULATOR_URL,
+    live: true,
   },
   {
     title: "Agent Systems Playground",
