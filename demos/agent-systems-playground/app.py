@@ -25,7 +25,7 @@ st.markdown(
     """
     <style>
     .stApp { background-color: #f8fafc; }
-    .block-container { padding-top: 1.5rem; }
+    .block-container { padding-top: 3rem; }
     .hero-title { font-size:2.4rem;font-weight:800;color:#1e293b;line-height:1.2;margin-bottom:6px; }
     .hero-sub   { color:#64748b;font-size:1.05rem;margin-bottom:0; }
     .section-label {
