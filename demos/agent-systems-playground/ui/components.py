@@ -130,22 +130,21 @@ def render_step(step: dict, show_agent_badge: bool = False) -> None:
     else:
         body = f'<div style="font-size:13px;color:{_RED};">{step.get("content","")}</div>'
 
+    header_style = f"display:flex;align-items:center;margin-bottom:8px;"
+    icon_style   = f"font-size:16px;margin-right:6px;"
+    label_style  = f"font-size:10px;font-weight:700;letter-spacing:1.5px;color:{cfg['text']};text-transform:uppercase;"
+    card_style   = f"background:{cfg['bg']};border:1px solid {_BORDER};border-left:4px solid {cfg['border']};border-radius:10px;padding:14px 18px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,0.04);"
+
     st.markdown(
-        f"""
-        <div style="background:{cfg['bg']};border:1px solid {_BORDER};
-                    border-left:4px solid {cfg['border']};border-radius:10px;
-                    padding:14px 18px;margin-bottom:10px;
-                    box-shadow:0 1px 4px rgba(0,0,0,0.04);">
-          <div style="display:flex;align-items:center;margin-bottom:8px;">
-            {badge}
-            <span style="font-size:16px;margin-right:6px;">{cfg['icon']}</span>
-            <span style="font-size:10px;font-weight:700;letter-spacing:1.5px;
-                         color:{cfg['text']};text-transform:uppercase;">{cfg['label']}</span>
-            {timing}
-          </div>
-          {body}
-        </div>
-        """,
+        f'<div style="{card_style}">'
+        f'<div style="{header_style}">'
+        f'{badge}'
+        f'<span style="{icon_style}">{cfg["icon"]}</span>'
+        f'<span style="{label_style}">{cfg["label"]}</span>'
+        f'{timing}'
+        f'</div>'
+        f'{body}'
+        f'</div>',
         unsafe_allow_html=True,
     )
 
