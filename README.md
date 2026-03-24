@@ -1,36 +1,62 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Visakh Sankar — AI Solutions Lab
 
-## Getting Started
+Live demos of enterprise AI systems, built in public. Each demo makes a concept you'd normally see on a slide actually interactive and testable.
 
-First, run the development server:
+**Site:** [visakhsankar.com](https://visakhsankar.com)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## Demos
+
+### 1. RAG Visual Simulator
+Upload any PDF or TXT file and watch the full Retrieval-Augmented Generation pipeline run step by step — chunking, embedding, vector retrieval, and answer generation. Every chunk is scored and ranked so you can see exactly why the model answered the way it did.
+
+**Stack:** Python · Streamlit · OpenAI `text-embedding-3-small` · FAISS · GPT-4o-mini
+
+[Live demo](https://visakh-ai-lab-mgbbdk4k9rk8gmkk4ey4tp.streamlit.app/) · [`demos/rag-visual-simulator`](demos/rag-visual-simulator)
+
+---
+
+### 2. AI Architecture Simulator
+Describe your enterprise use case in plain language. The system extracts your constraints, streams live architect reasoning via GPT-4o, recommends the best AI pattern from a 12-pattern library, and generates a trade-off radar chart and architecture brief you can share with your team.
+
+**Stack:** Python · Streamlit · GPT-4o · Plotly · JSON pattern library
+
+[Live demo](https://visakh-ai-lab-nzsdsdjsm45vyayjpvgfmk.streamlit.app/) · [`demos/ai-architecture-simulator`](demos/ai-architecture-simulator)
+
+---
+
+### 3. Agent Systems Playground
+Watch an AI agent think, choose tools, and reason its way to an answer — every step exposed. The agent has access to web search, a calculator, a summariser, and a memory system. A Multi-Agent mode shows an Orchestrator delegating work to Research, Analysis, and Writer agents in real time.
+
+**Stack:** Python · Streamlit · GPT-4o · Tavily Search API · OpenAI function calling
+
+[Live demo](https://visakh-ai-lab-dnyxly82duv6rrxvvs9r9m.streamlit.app/) · [`demos/agent-systems-playground`](demos/agent-systems-playground)
+
+---
+
+## Structure
+
+```
+demos/
+├── rag-visual-simulator/        # Demo 1
+├── ai-architecture-simulator/   # Demo 2
+└── agent-systems-playground/    # Demo 3
+app/                             # Next.js site (visakhsankar.com)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Running a demo locally
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+cd demos/<demo-name>
+python -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env          # add your API keys
+streamlit run app.py
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Each demo needs an `OPENAI_API_KEY`. The Agent Systems Playground also needs a `TAVILY_API_KEY`.
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Built by [Visakh Sankar](https://visakhsankar.com) · [LinkedIn](https://www.linkedin.com/in/visakhsankar/)
