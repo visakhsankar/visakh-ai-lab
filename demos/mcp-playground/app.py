@@ -2,7 +2,10 @@
 from __future__ import annotations
 
 import os
+import sys
 import time
+
+sys.path.insert(0, os.path.dirname(__file__))
 
 import streamlit as st
 from dotenv import load_dotenv
