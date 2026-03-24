@@ -1,21 +1,16 @@
-"""
-Multi-Agent mode: Orchestrator → Research → Analysis → Writer.
-"""
 import os
 import sys
 import time
-import pathlib
 
 import streamlit as st
 from dotenv import load_dotenv
 
 load_dotenv()
-sys.path.insert(0, str(pathlib.Path(__file__).parent.parent))
+sys.path.insert(0, os.path.dirname(__file__))
 
-from agent.multi_agent import run_multi_agent, AGENTS
+from agent.runner import run_agent
 from agent.tools import _LT_KEY, _ST_KEY
 from ui.components import render_step, render_memory_panel, render_analytics, render_tool_status
-
 
 
 # ── CSS ────────────────────────────────────────────────────────────────────────
@@ -44,24 +39,24 @@ st.markdown(
 )
 
 # ── Config ─────────────────────────────────────────────────────────────────────
-MAX_RUNS = 3   # multi-agent is heavier, so fewer free runs
+MAX_RUNS = 5
 
 # ── Session state ──────────────────────────────────────────────────────────────
 for k, v in [
-    ("ma_run_count",   0),
-    ("author_mode",    False),
-    ("ma_task_input",  ""),
-    ("ma_steps",       []),
-    ("ma_run_time",    0.0),
-    (_LT_KEY,          {}),
-    (_ST_KEY,          {}),
+    ("run_count",   0),
+    ("author_mode", False),
+    ("task_input",  ""),
+    ("steps",       []),
+    ("run_time",    0.0),
+    (_LT_KEY,       {}),
+    (_ST_KEY,       {}),
 ]:
     if k not in st.session_state:
         st.session_state[k] = v
 
 # ── Sidebar ────────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.markdown("## 🎯 Multi-Agent Mode")
+    st.markdown("## 🤖 Agent Settings")
     st.divider()
 
     render_tool_status()
@@ -70,7 +65,7 @@ with st.sidebar:
     if st.session_state.author_mode:
         st.caption("🔓 **Author mode** — no limits active")
     else:
-        remaining = MAX_RUNS - st.session_state.ma_run_count
+        remaining = MAX_RUNS - st.session_state.run_count
         st.caption(f"Runs remaining this session: **{remaining}/{MAX_RUNS}**")
         with st.expander("🔑 Author access"):
             pw = st.text_input("Password", type="password", label_visibility="collapsed")
@@ -82,22 +77,24 @@ with st.sidebar:
 
     st.divider()
 
-    with st.expander("ℹ️ How multi-agent works"):
-        for key, a in AGENTS.items():
-            if key == "orchestrator":
-                continue
-            st.markdown(
-                f"**{a['emoji']} {a['name']}**  \n"
-                f"Tools: {', '.join(a.get('allowed_tools', set()))}"
-            )
+    with st.expander("ℹ️ How this works"):
         st.markdown(
             """
-            **Flow:**
-            1. 🎯 Orchestrator plans the task
-            2. Delegates to specialist agents
-            3. Each agent runs its own loop
-            4. Results are passed as context
-            5. ✍️ Writer synthesises the final answer
+            **Agent Loop**
+            1. 🧠 **Think** — agent reasons about what to do
+            2. 🔧 **Act** — selects and calls a tool
+            3. 👁️ **Observe** — sees the tool result
+            4. ↻ Repeats until it has a final answer
+
+            **Tools available:**
+            - 🔍 Web Search (Tavily)
+            - 🧮 Calculator (safe eval)
+            - 💾 Remember (store facts)
+            - 🗃️ Recall (retrieve facts)
+            - 📋 Summarise (URL or text)
+
+            Switch to **Multi-Agent** in the sidebar for
+            orchestrator + specialist agent mode.
             """
         )
 
@@ -108,10 +105,10 @@ with st.sidebar:
 # ── Header ─────────────────────────────────────────────────────────────────────
 col_h1, col_h2 = st.columns([3, 1])
 with col_h1:
-    st.markdown('<div class="hero-title">🎯 Multi-Agent Mode</div>', unsafe_allow_html=True)
+    st.markdown('<div class="hero-title">🤖 Agent Systems Playground</div>', unsafe_allow_html=True)
     st.markdown(
-        '<p class="hero-sub">An Orchestrator breaks your task into subtasks and delegates '
-        'to specialist agents — each with their own tools and reasoning loop.</p>',
+        '<p class="hero-sub">Watch an AI agent think, choose tools, and reason its way '
+        'to an answer — every step exposed.</p>',
         unsafe_allow_html=True,
     )
 with col_h2:
@@ -125,64 +122,48 @@ with col_h2:
 
 st.markdown("---")
 
-# ── Agent diagram ──────────────────────────────────────────────────────────────
-agent_cols = st.columns(len(AGENTS))
-for col, (key, a) in zip(agent_cols, AGENTS.items()):
-    with col:
-        tools_str = ", ".join(a.get("allowed_tools", [])) if "allowed_tools" in a else "Planning"
-        st.markdown(
-            f"""
-            <div style="background:{a['bg']};border:1px solid {a['border']};border-radius:10px;
-                        padding:12px 14px;text-align:center;">
-              <div style="font-size:24px;">{a['emoji']}</div>
-              <div style="font-weight:700;font-size:13px;color:{a['color']};margin:4px 0;">
-                {a['name']}</div>
-              <div style="font-size:11px;color:#64748b;">{tools_str}</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-st.markdown("---")
-
 # ── Example tasks ──────────────────────────────────────────────────────────────
 EXAMPLES = [
-    ("🌐 AI Market Report",
-     "Research the global AI market size in 2025, identify the top 3 enterprise AI companies by revenue, and calculate the year-over-year growth rate if the market was $150B in 2024."),
-    ("🏗️ Architecture Decision",
-     "Research the pros and cons of RAG vs fine-tuning for enterprise AI. Calculate the cost difference for a company processing 1 million queries per month, and recommend the best approach."),
-    ("📈 Business Case",
-     "Research AI adoption rates in the insurance industry. Calculate the ROI for an insurer investing $2M in claims automation that reduces processing time by 40% on 500,000 claims per year worth $300 average cost each."),
+    ("🏥 Healthcare AI ROI",
+     "What are the top 3 use cases for AI in healthcare in 2025, and what ROI can hospitals expect from each?"),
+    ("📊 Market Research",
+     "Research the current state of the RAG (Retrieval-Augmented Generation) market. Who are the key players and what are the growth projections?"),
+    ("💰 Investment Calc",
+     "If I invest $250,000 in an AI automation project that saves 3 FTEs at $85,000 each per year, what is the ROI and payback period?"),
+    ("🔍 Competitive Intel",
+     "Compare OpenAI, Anthropic, and Google Gemini as enterprise AI providers. What are the key differentiators for a Fortune 500 choosing between them?"),
 ]
 
 st.markdown('<div class="section-label">Your Task</div>', unsafe_allow_html=True)
 
-with st.expander("💡 Try a multi-agent example"):
-    for label, text in EXAMPLES:
-        if st.button(label, use_container_width=True):
-            st.session_state.ma_task_input = text
-            st.rerun()
+with st.expander("💡 Try an example task"):
+    ex_cols = st.columns(len(EXAMPLES))
+    for col, (label, text) in zip(ex_cols, EXAMPLES):
+        with col:
+            if st.button(label, use_container_width=True):
+                st.session_state.task_input = text
+                st.rerun()
 
 task = st.text_area(
-    "Task for the agent team",
-    value=st.session_state.ma_task_input,
+    "Describe what you want the agent to research, calculate, or analyse",
+    value=st.session_state.task_input,
     height=110,
     placeholder=(
-        "Give the agents a complex task that requires research + calculation + synthesis. "
-        "e.g. Research AI in logistics, calculate ROI for a $1M investment, and write an executive summary."
+        "e.g. What are the top AI use cases in financial services, "
+        "and calculate the expected ROI for a mid-sized bank investing $500k?"
     ),
     label_visibility="collapsed",
 )
 
 _, btn_col, _ = st.columns([1, 2, 1])
 with btn_col:
-    run = st.button("🚀  Run Agent Team", use_container_width=True)
+    run = st.button("🚀  Run Agent", use_container_width=True)
 
 # ── Run ────────────────────────────────────────────────────────────────────────
 if run and task.strip():
-    if not st.session_state.author_mode and st.session_state.ma_run_count >= MAX_RUNS:
+    if not st.session_state.author_mode and st.session_state.run_count >= MAX_RUNS:
         st.warning(
-            f"🔒 Demo limit reached — {MAX_RUNS} multi-agent runs per session. "
+            f"🔒 Demo limit reached — {MAX_RUNS} runs per session. "
             "Refresh the page to start a new session."
         )
         st.stop()
@@ -191,35 +172,36 @@ if run and task.strip():
         st.error("⚠️ OPENAI_API_KEY is not set.")
         st.stop()
 
-    st.session_state.ma_run_count += 1
-    st.session_state.ma_steps     = []
-    st.session_state[_ST_KEY]     = {}
+    # Reset for new run
+    st.session_state.run_count += 1
+    st.session_state.steps     = []
+    st.session_state[_ST_KEY]  = {}
 
     st.markdown("---")
-    st.markdown('<div class="section-label">🔄 Multi-Agent Execution</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-label">🔄 Agent Loop</div>', unsafe_allow_html=True)
     st.markdown(
-        '<p style="color:#64748b;font-size:12px;margin-bottom:12px;">'
-        'Each agent badge shows who is acting. Watch the task flow between specialists.</p>',
+        f'<p style="color:#64748b;font-size:12px;margin-bottom:12px;">'
+        f'Watching the agent think, act, and observe — live.</p>',
         unsafe_allow_html=True,
     )
 
     steps_container = st.container()
     t_start = time.time()
 
-    for step in run_multi_agent(task):
-        st.session_state.ma_steps.append(step)
+    for step in run_agent(task):
+        st.session_state.steps.append(step)
         with steps_container:
-            render_step(step, show_agent_badge=True)
+            render_step(step, show_agent_badge=False)
 
-    st.session_state.ma_run_time = time.time() - t_start
+    st.session_state.run_time = time.time() - t_start
 
 elif run:
-    st.warning("Please enter a task above before running the agent team.")
+    st.warning("Please enter a task above before running the agent.")
 
 # ── Post-run panels ────────────────────────────────────────────────────────────
-if st.session_state.ma_steps:
+if st.session_state.steps:
     st.markdown("---")
-    render_analytics(st.session_state.ma_steps, st.session_state.ma_run_time)
+    render_analytics(st.session_state.steps, st.session_state.run_time)
 
     st.markdown("---")
     render_memory_panel(
