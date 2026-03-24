@@ -1,5 +1,6 @@
 const RAG_SIMULATOR_URL = "https://visakh-ai-lab-mgbbdk4k9rk8gmkk4ey4tp.streamlit.app/";
 const AI_ARCH_SIMULATOR_URL = "https://visakh-ai-lab-nzsdsdjsm45vyayjpvgfmk.streamlit.app/";
+const AGENT_PLAYGROUND_URL = "https://visakh-ai-lab-dnyxly82duv6rrxvvs9r9m.streamlit.app/";
 
 interface Build {
   title: string;
@@ -29,9 +30,10 @@ const BUILDS: Build[] = [
   {
     title: "Agent Systems Playground",
     description:
-      "A demo that shows how agent orchestration, tools, memory, and workflow execution fit together.",
-    tags: ["Agents", "Orchestration"],
-    live: false,
+      "Watch an AI agent think, choose tools, and reason its way to an answer — every step exposed. Includes multi-agent orchestration with Research, Analysis, and Writer agents.",
+    tags: ["Agents", "Orchestration", "OpenAI", "Streamlit"],
+    href: AGENT_PLAYGROUND_URL,
+    live: true,
   },
 ];
 
