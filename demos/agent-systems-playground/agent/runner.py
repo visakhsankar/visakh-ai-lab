@@ -10,7 +10,7 @@ from typing import Generator
 import streamlit as st
 from openai import OpenAI
 
-from agent.tools import execute_tool
+from agent.tools import execute_tool, _ST_KEY
 
 # ── Client ─────────────────────────────────────────────────────────────────────
 
@@ -212,6 +212,10 @@ def run_agent(task: str, prior_messages: list | None = None) -> Generator[dict, 
             tool_ms = int((time.time() - t1) * 1000)
 
             yield {"type": "observe", "tool": tool_name, "output": result, "time_ms": tool_ms, "agent": "main"}
+
+            # Write result into short-term memory so the panel stays live
+            if _ST_KEY in st.session_state:
+                st.session_state[_ST_KEY][f"{tool_name} #{len(st.session_state[_ST_KEY]) + 1}"] = result[:200]
 
             messages.append({"role": "tool", "tool_call_id": tc.id, "content": result})
 
