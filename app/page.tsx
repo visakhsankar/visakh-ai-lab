@@ -1,3 +1,4 @@
+const MCP_PLAYGROUND_URL = ""; // TODO: add Streamlit Cloud URL after deployment
 const RAG_SIMULATOR_URL = "https://visakh-ai-lab-mgbbdk4k9rk8gmkk4ey4tp.streamlit.app/";
 const AI_ARCH_SIMULATOR_URL = "https://visakh-ai-lab-nzsdsdjsm45vyayjpvgfmk.streamlit.app/";
 const AGENT_PLAYGROUND_URL = "https://visakh-ai-lab-dnyxly82duv6rrxvvs9r9m.streamlit.app/";
@@ -8,9 +9,19 @@ interface Build {
   tags: string[];
   href?: string;
   live: boolean;
+  isNew?: boolean;
 }
 
 const BUILDS: Build[] = [
+  {
+    title: "MCP Playground",
+    description:
+      "Watch AI connect to the world in real time via Model Context Protocol. Every JSON-RPC 2.0 message exposed — handshake, tool discovery, execution loop. 5 live tools including web search, calculator, weather, and database queries.",
+    tags: ["MCP", "Agents", "JSON-RPC", "OpenAI", "Streamlit"],
+    href: MCP_PLAYGROUND_URL || undefined,
+    live: !!MCP_PLAYGROUND_URL,
+    isNew: true,
+  },
   {
     title: "RAG Visual Simulator",
     description:
@@ -85,9 +96,16 @@ export default function Home() {
               >
                 <div>
                   <div className="flex items-start justify-between mb-3">
-                    <h3 className="text-xl font-semibold leading-snug">
-                      {build.title}
-                    </h3>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="text-xl font-semibold leading-snug">
+                        {build.title}
+                      </h3>
+                      {build.isNew && (
+                        <span className="shrink-0 inline-flex items-center text-xs font-bold text-white bg-black rounded-full px-2.5 py-0.5 tracking-wide">
+                          New
+                        </span>
+                      )}
+                    </div>
                     {build.live ? (
                       <span className="ml-3 mt-1 shrink-0 inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-full px-2 py-0.5">
                         <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
