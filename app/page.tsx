@@ -1,4 +1,4 @@
-const MCP_PLAYGROUND_URL = ""; // TODO: add Streamlit Cloud URL after deployment
+const MCP_PLAYGROUND_URL = "https://visakh-ai-lab-bwvwczzzbt9kzykyneu6ev.streamlit.app/";
 const RAG_SIMULATOR_URL = "https://visakh-ai-lab-mgbbdk4k9rk8gmkk4ey4tp.streamlit.app/";
 const AI_ARCH_SIMULATOR_URL = "https://visakh-ai-lab-nzsdsdjsm45vyayjpvgfmk.streamlit.app/";
 const AGENT_PLAYGROUND_URL = "https://visakh-ai-lab-dnyxly82duv6rrxvvs9r9m.streamlit.app/";
