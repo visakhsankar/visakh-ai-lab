@@ -16,8 +16,8 @@ st.set_page_config(
 )
 
 pg = st.navigation([
+    st.Page("pages/2_MCP_Concepts.py", title="How MCP Works", icon="📚"),
     st.Page("pages/mcp_playground.py", title="MCP Playground", icon="🔌", default=True),
     st.Page("pages/1_Before_vs_After.py", title="Before vs After", icon="⚖️"),
-    st.Page("pages/2_MCP_Concepts.py", title="How MCP Works", icon="📚"),
 ])
 pg.run()
