@@ -1,3 +1,4 @@
+const ENTERPRISE_AI_CANVAS_URL = "https://visakh-ai-lab-ewov39prfudprezj6gxfwu.streamlit.app/";
 const MCP_PLAYGROUND_URL = "https://visakh-ai-lab-bwvwczzzbt9kzykyneu6ev.streamlit.app/";
 const RAG_SIMULATOR_URL = "https://visakh-ai-lab-mgbbdk4k9rk8gmkk4ey4tp.streamlit.app/";
 const AI_ARCH_SIMULATOR_URL = "https://visakh-ai-lab-nzsdsdjsm45vyayjpvgfmk.streamlit.app/";
@@ -14,13 +15,21 @@ interface Build {
 
 const BUILDS: Build[] = [
   {
+    title: "Enterprise AI Canvas",
+    description:
+      "Describe your enterprise problem and get a scored, constraint-aware AI capability stack — foundation models, orchestration, RAG, data, infra — all ranked by fit. Includes architecture pattern detection and capability interrogation.",
+    tags: ["Architecture", "Decision Tools", "RAG", "Agents", "Streamlit"],
+    href: ENTERPRISE_AI_CANVAS_URL,
+    live: true,
+    isNew: true,
+  },
+  {
     title: "MCP Playground",
     description:
       "Watch AI connect to the world in real time via Model Context Protocol. Every JSON-RPC 2.0 message exposed — handshake, tool discovery, execution loop. 5 live tools including web search, calculator, weather, and database queries.",
     tags: ["MCP", "Agents", "JSON-RPC", "OpenAI", "Streamlit"],
     href: MCP_PLAYGROUND_URL || undefined,
     live: !!MCP_PLAYGROUND_URL,
-    isNew: true,
   },
   {
     title: "RAG Visual Simulator",
