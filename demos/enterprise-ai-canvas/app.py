@@ -13,7 +13,6 @@ st.set_page_config(
 
 pg = st.navigation([
     st.Page("pages/canvas.py", title="Capability Canvas", icon="🏗️", default=True),
-    st.Page("pages/1_Constraint_Editor.py", title="Constraint Editor", icon="⚙️"),
     st.Page("pages/2_Capability_Library.py", title="Capability Library", icon="📦"),
 ])
 pg.run()
