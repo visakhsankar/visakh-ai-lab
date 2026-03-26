@@ -21,7 +21,8 @@ def _c(id, name, layer, icon, vendor, desc, fit, contra, cost, quality, latency,
     }
 
 CAPABILITY_REGISTRY = {
-    # ── Foundation Models ───────────────────────────────────────────
+
+    # ── Foundation Models ─────────────────────────────────────────────────────
     "gpt4o": _c("gpt4o", "GPT-4o", "foundation_models", "🧠", "OpenAI",
         "OpenAI's flagship multimodal model. Best-in-class reasoning, code, and instruction following.",
         ["complex_reasoning", "multimodal", "high_quality", "cloud_ok", "external_users", "enterprise_budget"],
@@ -35,8 +36,8 @@ CAPABILITY_REGISTRY = {
     ),
     "gpt4o_mini": _c("gpt4o_mini", "GPT-4o-mini", "foundation_models", "⚡", "OpenAI",
         "Fast, cost-effective OpenAI model. Great for high-volume tasks with simpler reasoning.",
-        ["cost_critical", "high_volume", "cloud_ok", "simple_reasoning", "realtime"],
-        ["complex_reasoning", "on_prem", "ultra_high_quality"],
+        ["cost_critical", "high_volume", "cloud_ok", "low_scale", "realtime"],
+        ["complex_reasoning", "on_prem"],
         "low", "medium", "low", "low",
         questions=[
             {"q": "Is your use case primarily classification, extraction, or simple Q&A?", "good": True},
@@ -46,7 +47,7 @@ CAPABILITY_REGISTRY = {
     ),
     "claude_35_sonnet": _c("claude_35_sonnet", "Claude 3.5 Sonnet", "foundation_models", "🎭", "Anthropic",
         "Anthropic's leading model. Exceptional at coding, analysis, and following nuanced instructions.",
-        ["complex_reasoning", "high_quality", "cloud_ok", "compliance_aware", "long_context", "enterprise_budget"],
+        ["complex_reasoning", "high_quality", "cloud_ok", "compliance_heavy", "long_context", "enterprise_budget"],
         ["on_prem", "cost_critical", "ultra_low_latency"],
         "high", "high", "medium", "low",
         questions=[
@@ -79,7 +80,7 @@ CAPABILITY_REGISTRY = {
     ),
     "mistral_large": _c("mistral_large", "Mistral Large", "foundation_models", "🌀", "Mistral AI",
         "European frontier model. Strong multilingual capabilities, EU data residency options.",
-        ["multilingual", "data_residency", "eu_compliance", "cloud_ok"],
+        ["multilingual", "data_residency", "cloud_ok", "gdpr"],
         ["ultra_low_latency", "on_prem"],
         "high", "high", "medium", "low",
         questions=[
@@ -88,10 +89,21 @@ CAPABILITY_REGISTRY = {
             {"q": "Are you already invested in the OpenAI or Anthropic ecosystem?", "good": False},
         ]
     ),
+    "embedding_model": _c("embedding_model", "Embedding Model", "foundation_models", "🔢", "OpenAI / Cohere",
+        "Converts text to dense vector representations. Required for any semantic search or RAG pipeline.",
+        ["knowledge_base_heavy", "unstructured_data", "document_heavy", "grounding_critical", "domain_specific"],
+        [],
+        "low", "high", "low", "low",
+        questions=[
+            {"q": "Are you building any form of semantic search or document retrieval?", "good": True},
+            {"q": "Do you need to find similar content across a large document corpus?", "good": True},
+            {"q": "Is your use case purely generative with no retrieval component?", "good": False},
+        ]
+    ),
     "fine_tuned_model": _c("fine_tuned_model", "Fine-tuned Domain Model", "foundation_models", "🎯", "Custom",
         "A base model fine-tuned on proprietary domain data. Highest domain accuracy, but requires labeled data and MLOps.",
         ["fine_tuning_viable", "high_team_maturity", "domain_specific", "high_volume", "enterprise_budget"],
-        ["low_team_maturity", "startup_budget", "low_scale", "no_labeled_data"],
+        ["low_team_maturity", "startup_budget", "low_scale"],
         "very_high", "very_high", "low", "very_high",
         questions=[
             {"q": "Do you have at least 5,000 high-quality labeled examples in your domain?", "good": True},
@@ -100,22 +112,44 @@ CAPABILITY_REGISTRY = {
         ]
     ),
 
-    # ── Orchestration ───────────────────────────────────────────────
+    # ── Orchestration ─────────────────────────────────────────────────────────
+    "mcp": _c("mcp", "Model Context Protocol (MCP)", "orchestration", "🔌", "Anthropic / Open Standard",
+        "Universal protocol for connecting AI agents to tools, databases, and external services. Enables dynamic tool discovery at runtime — the AI learns what tools exist without them being hardcoded.",
+        ["tool_integration", "api_integration", "multi_agent", "external_users", "enterprise_budget", "cloud_ok"],
+        ["low_scale", "internal_users"],
+        "low", "high", "low", "medium",
+        questions=[
+            {"q": "Does your AI need to connect to multiple external tools or data sources dynamically?", "good": True},
+            {"q": "Do you want tool connections to be discoverable and swappable without code changes?", "good": True},
+            {"q": "Is your AI a simple single-purpose chatbot with no tool integrations?", "good": False},
+        ]
+    ),
+    "tool_use": _c("tool_use", "Function Calling / Tool Use", "orchestration", "🛠️", "OpenAI / Anthropic",
+        "Enable the LLM to call structured functions or tools. The foundation of all agentic AI behaviour — the AI decides when and how to use tools.",
+        ["tool_integration", "api_integration", "analytics_use_case", "external_users", "structured_data", "realtime", "cloud_ok"],
+        ["batch_ok"],
+        "low", "high", "low", "low",
+        questions=[
+            {"q": "Does your AI need to take actions beyond generating text (search, calculate, query)?", "good": True},
+            {"q": "Do you need the AI to interact with external APIs or databases?", "good": True},
+            {"q": "Is the AI's role limited to summarisation or pure text generation?", "good": False},
+        ]
+    ),
     "langchain": _c("langchain", "LangChain", "orchestration", "⛓️", "LangChain",
-        "The most widely adopted LLM orchestration framework. Rich ecosystem of integrations.",
-        ["cloud_ok", "medium_team_maturity", "knowledge_base_heavy", "standard_rag"],
-        ["ultra_low_latency", "minimal_dependencies"],
+        "The most widely adopted LLM orchestration framework. Rich ecosystem of integrations, chains, and agents.",
+        ["cloud_ok", "knowledge_base_heavy", "unstructured_data", "domain_specific", "grounding_critical", "document_heavy"],
+        ["ultra_low_latency"],
         "low", "medium", "medium", "medium",
         questions=[
             {"q": "Does your team already have experience with LangChain?", "good": True},
             {"q": "Do you need a large ecosystem of pre-built integrations?", "good": True},
-            {"q": "Is minimal framework overhead a requirement?", "good": False},
+            {"q": "Is minimal framework overhead a strict requirement?", "good": False},
         ]
     ),
     "llamaindex": _c("llamaindex", "LlamaIndex", "orchestration", "🦙", "LlamaIndex",
-        "Data framework for LLM applications. Best-in-class for RAG pipelines and document ingestion.",
-        ["knowledge_base_heavy", "unstructured_data", "standard_rag", "long_context"],
-        ["multi_agent", "complex_tool_use"],
+        "Data framework for LLM applications. Best-in-class for RAG pipelines, document ingestion, and knowledge retrieval.",
+        ["knowledge_base_heavy", "unstructured_data", "long_context", "domain_specific", "grounding_critical", "document_heavy"],
+        ["multi_agent"],
         "low", "high", "medium", "medium",
         questions=[
             {"q": "Is your primary use case document Q&A or knowledge base search?", "good": True},
@@ -124,9 +158,9 @@ CAPABILITY_REGISTRY = {
         ]
     ),
     "langgraph": _c("langgraph", "LangGraph", "orchestration", "🕸️", "LangChain",
-        "Graph-based stateful agent framework. Best for complex multi-step agents and loops.",
-        ["multi_agent", "stateful_conversation", "complex_tool_use", "high_team_maturity"],
-        ["low_team_maturity", "simple_rag", "batch_ok"],
+        "Graph-based stateful agent framework. Best for complex multi-step agents, loops, and branching decisions.",
+        ["multi_agent", "stateful_conversation", "tool_integration", "high_team_maturity", "complex_reasoning"],
+        ["low_team_maturity", "batch_ok"],
         "low", "high", "medium", "high",
         questions=[
             {"q": "Does your agent need to branch, loop, or make conditional decisions across steps?", "good": True},
@@ -135,9 +169,9 @@ CAPABILITY_REGISTRY = {
         ]
     ),
     "crewai": _c("crewai", "CrewAI", "orchestration", "👥", "CrewAI",
-        "Multi-agent framework for collaborative AI teams. Role-based agents with shared goals.",
+        "Multi-agent framework for collaborative AI teams. Role-based agents with shared goals and delegation.",
         ["multi_agent", "complex_reasoning", "high_team_maturity"],
-        ["low_team_maturity", "simple_tasks", "cost_critical"],
+        ["low_team_maturity", "low_scale", "cost_critical"],
         "low", "high", "low", "high",
         questions=[
             {"q": "Does your task naturally decompose into specialised sub-tasks handled by different agents?", "good": True},
@@ -146,19 +180,19 @@ CAPABILITY_REGISTRY = {
         ]
     ),
     "custom_agent_loop": _c("custom_agent_loop", "Custom Agent Loop", "orchestration", "🔁", "Custom",
-        "Hand-rolled ReAct or tool-use loop. Full control, no framework overhead.",
-        ["high_team_maturity", "ultra_low_latency", "minimal_dependencies", "vendor_lock_concern"],
-        ["low_team_maturity", "rapid_prototyping"],
+        "Hand-rolled ReAct or tool-use loop. Full control, no framework overhead. Best for performance-critical agents.",
+        ["high_team_maturity", "ultra_low_latency", "vendor_lock_concern", "tool_integration"],
+        ["low_team_maturity"],
         "low", "medium", "low", "high",
         questions=[
             {"q": "Do you need sub-100ms agent overhead?", "good": True},
             {"q": "Is avoiding framework dependencies a hard requirement?", "good": True},
-            {"q": "Do you have experienced ML engineers who can maintain custom orchestration code?", "good": True},
+            {"q": "Do you have experienced engineers who can maintain custom orchestration code?", "good": True},
         ]
     ),
     "semantic_kernel": _c("semantic_kernel", "Semantic Kernel", "orchestration", "🔷", "Microsoft",
-        "Microsoft's AI SDK. Deep Azure OpenAI integration, enterprise-ready, C# and Python.",
-        ["existing_azure", "enterprise_budget", "cloud_ok"],
+        "Microsoft's AI SDK. Deep Azure OpenAI integration, enterprise-ready plugins and planners.",
+        ["existing_azure", "enterprise_budget", "cloud_ok", "tool_integration"],
         ["open_source_preferred", "vendor_lock_concern"],
         "low", "high", "medium", "medium",
         questions=[
@@ -168,11 +202,11 @@ CAPABILITY_REGISTRY = {
         ]
     ),
 
-    # ── Memory & Context ────────────────────────────────────────────
+    # ── Memory & Context ──────────────────────────────────────────────────────
     "faiss": _c("faiss", "FAISS", "memory_context", "🔍", "Meta (Open Source)",
-        "In-memory vector store. Fast similarity search, no infrastructure cost. Good for prototyping.",
-        ["low_scale", "rapid_prototyping", "open_source_preferred", "on_prem"],
-        ["high_volume", "persistence_required", "distributed_scale"],
+        "In-memory vector store. Fast similarity search, no infrastructure cost. Good for prototyping and small corpora.",
+        ["low_scale", "startup_budget", "open_source_preferred", "on_prem", "document_heavy"],
+        ["high_volume", "enterprise_budget"],
         "low", "medium", "low", "low",
         questions=[
             {"q": "Are you in a prototyping or proof-of-concept phase?", "good": True},
@@ -182,7 +216,7 @@ CAPABILITY_REGISTRY = {
     ),
     "pinecone": _c("pinecone", "Pinecone", "memory_context", "🌲", "Pinecone",
         "Managed vector database. Serverless scaling, high availability, no infrastructure to manage.",
-        ["cloud_ok", "high_volume", "enterprise_budget", "knowledge_base_heavy"],
+        ["cloud_ok", "high_volume", "enterprise_budget", "knowledge_base_heavy", "document_heavy"],
         ["on_prem", "data_residency", "cost_critical"],
         "medium", "high", "low", "low",
         questions=[
@@ -193,30 +227,30 @@ CAPABILITY_REGISTRY = {
     ),
     "pgvector": _c("pgvector", "pgvector", "memory_context", "🐘", "PostgreSQL",
         "Vector search extension for Postgres. Combines relational and vector queries in one database.",
-        ["existing_postgres", "structured_data", "hybrid_search", "on_prem", "cost_critical"],
-        ["very_high_scale", "complex_ann"],
+        ["structured_data", "on_prem", "cost_critical", "knowledge_base_heavy"],
+        ["high_volume"],
         "low", "medium", "medium", "medium",
         questions=[
             {"q": "Are you already running PostgreSQL in your stack?", "good": True},
             {"q": "Do you need to combine vector search with relational filters?", "good": True},
-            {"q": "Do you need to search across more than 10 million vectors?", "good": False},
+            {"q": "Do you need to search across more than 10 million vectors at scale?", "good": False},
         ]
     ),
     "redis_cache": _c("redis_cache", "Redis Semantic Cache", "memory_context", "⚡", "Redis",
         "In-memory cache for LLM responses and embeddings. Dramatically reduces cost for repeated queries.",
         ["high_volume", "cost_critical", "realtime", "repeated_queries"],
-        ["unique_queries", "low_scale"],
+        ["low_scale"],
         "low", "medium", "very_low", "low",
         questions=[
             {"q": "Do you expect many users to ask similar or identical questions?", "good": True},
             {"q": "Is reducing API cost at scale a priority?", "good": True},
-            {"q": "Is every query unique enough that caching would have low hit rate?", "good": False},
+            {"q": "Is every query unique enough that caching would have a low hit rate?", "good": False},
         ]
     ),
     "neo4j_graph": _c("neo4j_graph", "Neo4j Knowledge Graph", "memory_context", "🕸️", "Neo4j",
-        "Graph database for knowledge representation. Excels at relationship-heavy domains.",
-        ["relationship_heavy", "knowledge_graph_required", "complex_reasoning", "high_team_maturity"],
-        ["low_team_maturity", "simple_rag", "startup_budget"],
+        "Graph database for knowledge representation. Excels at relationship-heavy domains like legal, medical, and supply chain.",
+        ["relationship_heavy", "complex_reasoning", "high_team_maturity", "domain_specific"],
+        ["low_team_maturity", "startup_budget"],
         "high", "very_high", "medium", "very_high",
         questions=[
             {"q": "Does your domain have rich entity relationships (org charts, medical ontologies, etc.)?", "good": True},
@@ -225,9 +259,9 @@ CAPABILITY_REGISTRY = {
         ]
     ),
     "conversation_buffer": _c("conversation_buffer", "Conversation Buffer", "memory_context", "💬", "Custom",
-        "Simple in-memory conversation history. No vector store needed for short sessions.",
-        ["simple_chat", "low_scale", "stateful_conversation", "rapid_prototyping"],
-        ["long_sessions", "high_volume", "cross_session_memory"],
+        "Simple in-memory conversation history. No vector store needed for short-session chat.",
+        ["low_scale", "stateful_conversation", "startup_budget", "internal_users"],
+        ["high_volume"],
         "low", "low", "very_low", "very_low",
         questions=[
             {"q": "Are your conversations short (< 20 turns)?", "good": True},
@@ -236,22 +270,22 @@ CAPABILITY_REGISTRY = {
         ]
     ),
 
-    # ── Data & Grounding ────────────────────────────────────────────
+    # ── Data & Grounding ──────────────────────────────────────────────────────
     "naive_rag": _c("naive_rag", "Naive RAG", "data_grounding", "📄", "Custom",
-        "Basic retrieve-then-generate. Embed documents, search by similarity, inject into prompt.",
-        ["knowledge_base_heavy", "unstructured_data", "medium_team_maturity", "rapid_prototyping"],
-        ["complex_reasoning", "very_high_quality", "structured_data"],
+        "Basic retrieve-then-generate. Embed documents, search by similarity, inject into prompt. The starting point for any knowledge-grounded AI.",
+        ["knowledge_base_heavy", "unstructured_data", "document_heavy", "domain_specific", "grounding_critical", "external_users"],
+        ["structured_data"],
         "low", "medium", "medium", "low",
         questions=[
             {"q": "Do you have a corpus of documents users need to query?", "good": True},
-            {"q": "Is a basic vector similarity search sufficient for your retrieval needs?", "good": True},
-            {"q": "Do users ask complex analytical questions that require multiple documents?", "good": False},
+            {"q": "Is grounding answers in your own data more important than general knowledge?", "good": True},
+            {"q": "Do users ask complex analytical questions that require reasoning across many documents?", "good": False},
         ]
     ),
     "hybrid_search": _c("hybrid_search", "Hybrid Search", "data_grounding", "🔀", "Custom",
-        "Combines BM25 keyword search with vector search. Higher recall, especially for exact term matching.",
-        ["knowledge_base_heavy", "high_quality", "enterprise_budget"],
-        ["rapid_prototyping", "startup_budget", "simple_rag"],
+        "Combines BM25 keyword search with vector search. Higher recall, especially for exact term and product name matching.",
+        ["knowledge_base_heavy", "high_quality", "enterprise_budget", "domain_specific", "grounding_critical", "document_heavy"],
+        ["startup_budget", "low_scale"],
         "medium", "high", "medium", "medium",
         questions=[
             {"q": "Do users frequently search for specific product names, codes, or technical terms?", "good": True},
@@ -261,8 +295,8 @@ CAPABILITY_REGISTRY = {
     ),
     "reranker": _c("reranker", "Re-ranker", "data_grounding", "🏆", "Cohere / Custom",
         "Cross-encoder that re-ranks retrieved documents by relevance. Improves RAG precision significantly.",
-        ["high_quality", "knowledge_base_heavy", "enterprise_budget", "grounding_critical"],
-        ["cost_critical", "ultra_low_latency", "simple_rag"],
+        ["high_quality", "knowledge_base_heavy", "enterprise_budget", "grounding_critical", "document_heavy"],
+        ["cost_critical", "ultra_low_latency"],
         "medium", "very_high", "medium", "medium",
         ["naive_rag", "hybrid_search"],
         questions=[
@@ -272,9 +306,9 @@ CAPABILITY_REGISTRY = {
         ]
     ),
     "contextual_chunking": _c("contextual_chunking", "Contextual Chunking", "data_grounding", "✂️", "Custom",
-        "Intelligent document chunking that preserves semantic context. Better than fixed-size splits.",
-        ["knowledge_base_heavy", "long_context", "high_quality", "unstructured_data"],
-        ["simple_documents", "rapid_prototyping"],
+        "Intelligent document chunking that preserves semantic context. Better than fixed-size splits for complex documents.",
+        ["knowledge_base_heavy", "long_context", "high_quality", "unstructured_data", "document_heavy", "domain_specific"],
+        ["low_scale"],
         "low", "high", "low", "medium",
         questions=[
             {"q": "Do your documents have complex structure (tables, headers, cross-references)?", "good": True},
@@ -283,9 +317,9 @@ CAPABILITY_REGISTRY = {
         ]
     ),
     "sql_connector": _c("sql_connector", "SQL / Database Connector", "data_grounding", "🗃️", "Custom",
-        "Natural language to SQL. Allows AI to query structured databases directly.",
-        ["structured_data", "analytics_use_case", "enterprise_budget"],
-        ["unstructured_data_only", "no_database"],
+        "Natural language to SQL. Allows AI to query structured databases directly for analytics and reporting.",
+        ["structured_data", "analytics_use_case", "enterprise_budget", "tool_integration"],
+        ["unstructured_data"],
         "low", "high", "medium", "high",
         questions=[
             {"q": "Do users need to query structured data from databases or data warehouses?", "good": True},
@@ -294,9 +328,9 @@ CAPABILITY_REGISTRY = {
         ]
     ),
     "streaming_ingestion": _c("streaming_ingestion", "Real-time Data Ingestion", "data_grounding", "📡", "Custom",
-        "Continuous ingestion pipeline for live data feeds. Keeps the knowledge base current.",
+        "Continuous ingestion pipeline for live data feeds. Keeps the knowledge base current in near real-time.",
         ["streaming_data", "realtime", "high_volume", "enterprise_budget", "high_team_maturity"],
-        ["static_data", "low_team_maturity", "startup_budget"],
+        ["low_team_maturity", "startup_budget"],
         "high", "high", "medium", "very_high",
         questions=[
             {"q": "Does your data change frequently and users expect up-to-date answers?", "good": True},
@@ -305,9 +339,9 @@ CAPABILITY_REGISTRY = {
         ]
     ),
     "knowledge_graph_rag": _c("knowledge_graph_rag", "Graph RAG", "data_grounding", "🗺️", "Custom",
-        "RAG over a knowledge graph. Enables multi-hop reasoning across entity relationships.",
+        "RAG over a knowledge graph. Enables multi-hop reasoning across entity relationships — beyond what vector search can do.",
         ["relationship_heavy", "complex_reasoning", "high_team_maturity", "enterprise_budget"],
-        ["low_team_maturity", "simple_rag", "startup_budget"],
+        ["low_team_maturity", "startup_budget"],
         "very_high", "very_high", "medium", "very_high",
         ["neo4j_graph"],
         questions=[
@@ -317,11 +351,11 @@ CAPABILITY_REGISTRY = {
         ]
     ),
 
-    # ── Safety & Control ────────────────────────────────────────────
+    # ── Safety & Control ──────────────────────────────────────────────────────
     "guardrails": _c("guardrails", "Guardrails AI", "safety_control", "🛡️", "Guardrails AI",
-        "Framework for validating and correcting LLM outputs. Enforce schemas, detect hallucinations.",
+        "Framework for validating and correcting LLM outputs. Enforce schemas, detect hallucinations, ensure structured responses.",
         ["compliance_heavy", "high_data_sensitivity", "external_users", "grounding_critical"],
-        ["ultra_low_latency", "simple_internal"],
+        ["ultra_low_latency", "internal_users"],
         "medium", "high", "medium", "medium",
         questions=[
             {"q": "Do you need structured output validation (JSON schema compliance)?", "good": True},
@@ -332,7 +366,7 @@ CAPABILITY_REGISTRY = {
     "pii_masking": _c("pii_masking", "PII Masking / Anonymisation", "safety_control", "🎭", "Custom / AWS Comprehend",
         "Detect and redact personally identifiable information before sending to LLM APIs.",
         ["high_data_sensitivity", "compliance_heavy", "external_users", "gdpr", "hipaa"],
-        ["internal_only", "no_pii_data"],
+        ["internal_users"],
         "medium", "high", "medium", "medium",
         questions=[
             {"q": "Do users share or does your data contain PII (names, emails, health data)?", "good": True},
@@ -343,7 +377,7 @@ CAPABILITY_REGISTRY = {
     "output_filter": _c("output_filter", "Output Content Filter", "safety_control", "🔒", "OpenAI / Custom",
         "Filter model outputs for harmful, inappropriate, or off-topic content before showing users.",
         ["external_users", "compliance_heavy", "consumer_facing"],
-        ["internal_only", "trusted_users"],
+        ["internal_users"],
         "low", "high", "medium", "low",
         questions=[
             {"q": "Is your AI facing external or consumer users who might receive harmful outputs?", "good": True},
@@ -353,8 +387,8 @@ CAPABILITY_REGISTRY = {
     ),
     "human_in_loop": _c("human_in_loop", "Human-in-the-Loop", "safety_control", "👤", "Custom",
         "Route low-confidence or high-risk decisions to human review before acting.",
-        ["compliance_heavy", "high_stakes_decisions", "external_users", "regulated_industry"],
-        ["fully_automated", "high_volume", "realtime"],
+        ["compliance_heavy", "high_stakes_decisions", "external_users"],
+        ["high_volume", "realtime"],
         "high", "very_high", "very_low", "high",
         questions=[
             {"q": "Are there decisions in your workflow that carry significant risk if wrong?", "good": True},
@@ -365,7 +399,7 @@ CAPABILITY_REGISTRY = {
     "audit_logging": _c("audit_logging", "Audit Logging", "safety_control", "📋", "Custom",
         "Immutable logs of all AI inputs, outputs, and decisions. Required for regulated industries.",
         ["compliance_heavy", "gdpr", "hipaa", "sox", "enterprise_budget", "external_users"],
-        ["startup_budget", "internal_prototype"],
+        ["startup_budget"],
         "medium", "high", "low", "medium",
         questions=[
             {"q": "Does your industry require audit trails for AI-generated decisions?", "good": True},
@@ -374,9 +408,9 @@ CAPABILITY_REGISTRY = {
         ]
     ),
     "prompt_injection_defense": _c("prompt_injection_defense", "Prompt Injection Defence", "safety_control", "💉", "Custom",
-        "Detect and block attempts to manipulate the AI via adversarial user inputs.",
-        ["external_users", "tool_use", "multi_agent", "agentic_systems"],
-        ["internal_only", "simple_chat"],
+        "Detect and block attempts to manipulate the AI via adversarial user inputs. Critical for agentic systems with tool access.",
+        ["external_users", "tool_integration", "multi_agent"],
+        ["internal_users"],
         "low", "high", "medium", "medium",
         questions=[
             {"q": "Does your AI have access to tools or external systems that could be abused?", "good": True},
@@ -385,11 +419,11 @@ CAPABILITY_REGISTRY = {
         ]
     ),
 
-    # ── Observability ───────────────────────────────────────────────
+    # ── Observability ──────────────────────────────────────────────────────────
     "langsmith": _c("langsmith", "LangSmith", "observability", "🔭", "LangChain",
         "Tracing, evaluation, and debugging for LangChain apps. Excellent developer experience.",
-        ["langchain_user", "medium_team_maturity", "cloud_ok"],
-        ["non_langchain", "on_prem", "data_residency"],
+        ["cloud_ok", "knowledge_base_heavy", "domain_specific", "grounding_critical"],
+        ["on_prem", "data_residency"],
         "medium", "high", "low", "low",
         ["langchain"],
         questions=[
@@ -400,7 +434,7 @@ CAPABILITY_REGISTRY = {
     ),
     "langfuse": _c("langfuse", "Langfuse", "observability", "🌿", "Langfuse (Open Source)",
         "Open-source LLM observability. Self-hostable, framework-agnostic tracing and evals.",
-        ["open_source_preferred", "on_prem", "any_framework", "high_team_maturity"],
+        ["open_source_preferred", "on_prem", "high_team_maturity", "grounding_critical"],
         ["low_team_maturity"],
         "low", "high", "low", "medium",
         questions=[
@@ -412,7 +446,7 @@ CAPABILITY_REGISTRY = {
     "custom_eval": _c("custom_eval", "Custom Eval Harness", "observability", "🧪", "Custom",
         "Domain-specific evaluation framework. Test against ground truth, measure accuracy over time.",
         ["grounding_critical", "high_team_maturity", "enterprise_budget", "compliance_heavy"],
-        ["rapid_prototyping", "low_team_maturity"],
+        ["low_team_maturity"],
         "high", "very_high", "low", "very_high",
         questions=[
             {"q": "Do you have domain experts who can create ground-truth evaluation datasets?", "good": True},
@@ -423,7 +457,7 @@ CAPABILITY_REGISTRY = {
     "cost_monitor": _c("cost_monitor", "Cost Monitoring Dashboard", "observability", "💰", "Custom",
         "Track LLM API spend per user, tenant, or feature. Prevent bill shock at scale.",
         ["high_volume", "enterprise_budget", "multi_tenant", "cost_critical"],
-        ["low_scale", "single_user"],
+        ["low_scale"],
         "low", "medium", "low", "medium",
         questions=[
             {"q": "Do you serve multiple teams or customers who each need cost attribution?", "good": True},
@@ -434,7 +468,7 @@ CAPABILITY_REGISTRY = {
     "ab_testing": _c("ab_testing", "A/B Testing Framework", "observability", "⚗️", "Custom",
         "Run experiments comparing prompt versions, models, or retrieval strategies.",
         ["enterprise_budget", "high_volume", "high_team_maturity", "grounding_critical"],
-        ["rapid_prototyping", "low_scale", "startup_budget"],
+        ["low_scale", "startup_budget"],
         "medium", "very_high", "low", "high",
         questions=[
             {"q": "Do you need to systematically compare model versions or prompt strategies?", "good": True},
@@ -443,11 +477,11 @@ CAPABILITY_REGISTRY = {
         ]
     ),
 
-    # ── Deployment & Scale ──────────────────────────────────────────
+    # ── Deployment & Scale ────────────────────────────────────────────────────
     "rest_api": _c("rest_api", "REST API (FastAPI)", "deployment_scale", "🌐", "Custom",
-        "Standard HTTP API layer. Decouples your AI from frontends, enables multi-client access.",
-        ["external_users", "multi_client", "enterprise_budget", "high_team_maturity"],
-        ["single_internal_user", "rapid_prototyping"],
+        "Standard HTTP API layer. Decouples your AI from frontends, enables multi-client and programmatic access.",
+        ["external_users", "multi_tenant", "enterprise_budget", "high_team_maturity", "api_integration"],
+        ["internal_users", "low_scale"],
         "low", "high", "medium", "medium",
         questions=[
             {"q": "Do you need to serve the AI capability to multiple clients or frontends?", "good": True},
@@ -456,9 +490,9 @@ CAPABILITY_REGISTRY = {
         ]
     ),
     "streaming_api": _c("streaming_api", "Streaming API (SSE/WebSocket)", "deployment_scale", "🌊", "Custom",
-        "Stream model tokens to the user as they're generated. Dramatically improves perceived latency.",
-        ["external_users", "chat_interface", "realtime", "high_quality"],
-        ["batch_ok", "internal_batch"],
+        "Stream model tokens to the user as they are generated. Dramatically improves perceived latency for chat interfaces.",
+        ["external_users", "stateful_conversation", "realtime", "high_quality"],
+        ["batch_ok"],
         "low", "high", "very_low", "medium",
         questions=[
             {"q": "Do users interact with the AI via a chat interface and expect real-time responses?", "good": True},
@@ -467,9 +501,9 @@ CAPABILITY_REGISTRY = {
         ]
     ),
     "prompt_cache": _c("prompt_cache", "Prompt Caching", "deployment_scale", "💾", "OpenAI / Anthropic",
-        "Cache repeated prompt prefixes (system prompts, documents) to reduce latency and cost.",
-        ["high_volume", "long_context", "cost_critical", "repeated_system_prompts"],
-        ["fully_dynamic_prompts"],
+        "Cache repeated prompt prefixes (system prompts, documents) to reduce latency and cost. Native support in GPT-4o and Claude.",
+        ["high_volume", "long_context", "cost_critical", "repeated_queries", "knowledge_base_heavy"],
+        [],
         "low", "high", "very_low", "very_low",
         questions=[
             {"q": "Do you use long system prompts or inject large documents that repeat across calls?", "good": True},
@@ -479,8 +513,8 @@ CAPABILITY_REGISTRY = {
     ),
     "azure_openai": _c("azure_openai", "Azure OpenAI Service", "deployment_scale", "☁️", "Microsoft",
         "OpenAI models deployed in Azure. EU data residency, private networking, enterprise SLAs.",
-        ["existing_azure", "data_residency", "enterprise_budget", "compliance_heavy", "eu_compliance"],
-        ["open_source_preferred", "aws_only"],
+        ["existing_azure", "data_residency", "enterprise_budget", "compliance_heavy", "gdpr"],
+        ["open_source_preferred"],
         "high", "high", "medium", "medium",
         questions=[
             {"q": "Is your organisation already on Microsoft Azure?", "good": True},
@@ -489,9 +523,9 @@ CAPABILITY_REGISTRY = {
         ]
     ),
     "on_prem_deploy": _c("on_prem_deploy", "On-Premise Deployment", "deployment_scale", "🏢", "Custom",
-        "Deploy the entire AI stack within your own data centre. Maximum data control.",
+        "Deploy the entire AI stack within your own data centre. Maximum data control and isolation.",
         ["on_prem", "data_residency", "compliance_heavy", "high_team_maturity", "enterprise_budget"],
-        ["cloud_ok", "low_team_maturity", "startup_budget", "rapid_prototyping"],
+        ["cloud_ok", "low_team_maturity", "startup_budget"],
         "very_high", "high", "medium", "very_high",
         questions=[
             {"q": "Is on-premise deployment a hard requirement (regulatory or security)?", "good": True},
@@ -502,7 +536,7 @@ CAPABILITY_REGISTRY = {
     "multi_tenant_routing": _c("multi_tenant_routing", "Multi-Tenant Routing", "deployment_scale", "🏘️", "Custom",
         "Route requests to tenant-specific models, prompts, and data. Essential for SaaS AI products.",
         ["multi_tenant", "enterprise_budget", "external_users", "high_team_maturity"],
-        ["single_tenant", "internal_only"],
+        ["internal_users"],
         "high", "high", "low", "very_high",
         questions=[
             {"q": "Are you building a SaaS product where each customer needs isolated AI contexts?", "good": True},
@@ -511,11 +545,11 @@ CAPABILITY_REGISTRY = {
         ]
     ),
 
-    # ── Integration & UX ────────────────────────────────────────────
+    # ── Integration & UX ──────────────────────────────────────────────────────
     "chat_interface": _c("chat_interface", "Chat Interface (Web)", "integration_ux", "💬", "Custom",
-        "Web-based conversational UI. The standard interaction pattern for conversational AI.",
+        "Web-based conversational UI. The standard interaction pattern for customer-facing AI.",
         ["external_users", "stateful_conversation", "realtime", "consumer_facing"],
-        ["batch_only", "api_only"],
+        ["batch_ok", "internal_users"],
         "medium", "high", "medium", "medium",
         questions=[
             {"q": "Is the primary user interaction conversational (back-and-forth dialogue)?", "good": True},
@@ -524,8 +558,8 @@ CAPABILITY_REGISTRY = {
         ]
     ),
     "slack_teams_bot": _c("slack_teams_bot", "Slack / Teams Bot", "integration_ux", "💼", "Custom",
-        "Deploy AI directly into collaboration tools. High adoption for internal use cases.",
-        ["internal_users", "existing_slack_teams", "enterprise_budget"],
+        "Deploy AI directly into collaboration tools. High adoption for internal employee use cases.",
+        ["internal_users", "enterprise_budget"],
         ["external_users", "consumer_facing"],
         "medium", "high", "medium", "medium",
         questions=[
@@ -535,9 +569,9 @@ CAPABILITY_REGISTRY = {
         ]
     ),
     "voice_interface": _c("voice_interface", "Voice Interface", "integration_ux", "🎤", "OpenAI / Custom",
-        "Speech-to-text and text-to-speech for voice-enabled AI. Higher engagement, accessibility.",
-        ["voice_required", "accessibility", "multimodal", "external_users"],
-        ["text_only", "cost_critical"],
+        "Speech-to-text and text-to-speech for voice-enabled AI. Higher engagement and accessibility.",
+        ["voice_required", "multimodal", "external_users", "consumer_facing"],
+        ["cost_critical"],
         "high", "high", "medium", "high",
         questions=[
             {"q": "Do users need to interact with the AI via voice (call centre, hands-free)?", "good": True},
@@ -546,9 +580,9 @@ CAPABILITY_REGISTRY = {
         ]
     ),
     "api_sdk": _c("api_sdk", "Developer API / SDK", "integration_ux", "📦", "Custom",
-        "Published API and SDK for developers to integrate your AI capability into their own apps.",
-        ["developer_platform", "multi_client", "enterprise_budget", "high_team_maturity"],
-        ["single_use_case", "internal_only"],
+        "Published API and SDK for developers to integrate your AI capability into their own applications.",
+        ["multi_tenant", "enterprise_budget", "high_team_maturity", "api_integration", "external_users"],
+        ["internal_users"],
         "high", "very_high", "medium", "very_high",
         questions=[
             {"q": "Are you building a platform that other developers or teams will integrate with?", "good": True},
@@ -557,9 +591,9 @@ CAPABILITY_REGISTRY = {
         ]
     ),
     "webhook_system": _c("webhook_system", "Webhook System", "integration_ux", "🔔", "Custom",
-        "Event-driven integration. Trigger AI workflows from external system events.",
-        ["event_driven", "enterprise_budget", "high_team_maturity", "existing_integrations"],
-        ["simple_chat", "synchronous_only"],
+        "Event-driven integration. Trigger AI workflows from external system events automatically.",
+        ["event_driven", "enterprise_budget", "high_team_maturity", "api_integration"],
+        [],
         "medium", "high", "low", "high",
         questions=[
             {"q": "Does your AI need to react to events from other systems (new document, ticket, etc.)?", "good": True},

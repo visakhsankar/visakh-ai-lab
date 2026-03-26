@@ -14,6 +14,7 @@ ALL_SIGNALS = [
     "knowledge_base_heavy", "grounding_critical", "relationship_heavy", "multi_tenant",
     "high_stakes_decisions", "domain_specific", "consumer_facing", "event_driven",
     "voice_required", "analytics_use_case", "repeated_queries",
+    "tool_integration", "document_heavy", "api_integration",
 ]
 
 SYSTEM_PROMPT = """You are an expert enterprise AI architect. Analyse a business problem statement and extract structured signals.
