@@ -433,43 +433,55 @@ st.markdown(
 
 mermaid_code = generate_mermaid(pattern, scores, manually_added, manually_removed, st.session_state.analysis)
 
-# Dynamic height: count nodes and edges to size the container
-_mermaid_lines = [l.strip() for l in mermaid_code.strip().splitlines() if l.strip()]
-_num_elements = sum(1 for l in _mermaid_lines if '-->' in l or '-.->' in l or ('[' in l and ']' in l))
-_diagram_height = max(520, 300 + _num_elements * 40)
 diagram_summary = generate_diagram_summary(pattern, scores, manually_added, manually_removed, st.session_state.analysis)
 
-# Render the Mermaid diagram in a styled container
-diagram_html = f"""<div style="background:#0F172A;border-radius:12px;padding:24px;border:1px solid #1E293B">
-<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
-<span style="font-size:14px;font-weight:700;color:#E2E8F0">{pattern}</span>
-<span style="font-size:10px;font-weight:600;color:#94A3B8;background:#1E293B;padding:2px 8px;border-radius:4px">AUTO-GENERATED</span>
-</div>
-<div class="mermaid" style="text-align:center">{mermaid_code}</div>
-</div>"""
+# Shared Mermaid init config
+_mermaid_cfg = "{{startOnLoad:true,theme:'dark',flowchart:{{useMaxWidth:true,curve:'basis'}},themeVariables:{{primaryColor:'#0F766E',primaryTextColor:'#fff',primaryBorderColor:'#0D9488',lineColor:'#94A3B8',secondaryColor:'#1E293B',tertiaryColor:'#0F172A'}}}}"
 
-# Inject Mermaid JS and render
+# Inline preview (compact, scrollable)
 st.components.v1.html(
     f"""
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-    <script>mermaid.initialize({{startOnLoad: true, theme: 'dark', flowchart: {{useMaxWidth: true}}, themeVariables: {{primaryColor: '#0F766E', primaryTextColor: '#fff', primaryBorderColor: '#0D9488', lineColor: '#94A3B8', secondaryColor: '#1E293B', tertiaryColor: '#0F172A'}}}});</script>
+    <script>mermaid.initialize({_mermaid_cfg});</script>
     <div style="background:#0F172A;border-radius:12px;padding:24px;font-family:-apple-system,BlinkMacSystemFont,sans-serif;overflow:auto">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
-        <span style="font-size:14px;font-weight:700;color:#E2E8F0">{pattern}</span>
-        <span style="font-size:10px;font-weight:600;color:#94A3B8;background:#1E293B;padding:2px 8px;border-radius:4px">AUTO-GENERATED</span>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:14px;font-weight:700;color:#E2E8F0">{pattern}</span>
+          <span style="font-size:10px;font-weight:600;color:#94A3B8;background:#1E293B;padding:2px 8px;border-radius:4px">AUTO-GENERATED</span>
+        </div>
+        <button onclick="openDiagram()" style="background:#1E293B;color:#94A3B8;border:1px solid #334155;border-radius:6px;padding:4px 12px;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px"
+          onmouseover="this.style.background='#334155';this.style.color='#E2E8F0'"
+          onmouseout="this.style.background='#1E293B';this.style.color='#94A3B8'">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+          Full Screen
+        </button>
       </div>
       <div class="mermaid">
 {mermaid_code}
       </div>
     </div>
+    <script>
+    function openDiagram() {{
+      var w = window.open('', '_blank');
+      w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>{pattern} — Architecture Diagram</title>
+        <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"><\\/script>
+        <style>body{{margin:0;background:#0F172A;display:flex;flex-direction:column;align-items:center;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,sans-serif}}
+        .header{{padding:24px 32px;width:100%;box-sizing:border-box;display:flex;align-items:center;gap:12px}}
+        .header h1{{color:#E2E8F0;font-size:18px;margin:0}} .header span{{font-size:10px;font-weight:600;color:#94A3B8;background:#1E293B;padding:2px 8px;border-radius:4px}}
+        .diagram{{padding:32px;width:100%;box-sizing:border-box;display:flex;justify-content:center}}</style></head>
+        <body><div class="header"><h1>{pattern}</h1><span>AUTO-GENERATED</span></div>
+        <div class="diagram"><div class="mermaid">{mermaid_code}</div></div>
+        <script>mermaid.initialize({_mermaid_cfg});<\\/script></body></html>`);
+      w.document.close();
+    }}
+    </script>
     """,
-    height=_diagram_height,
+    height=500,
 )
 
-# Show the stack summary beside/below the diagram
+# Stack summary and raw code
 with st.expander("📋 Stack Summary", expanded=True):
     st.markdown(diagram_summary)
 
-# Show raw Mermaid code in a collapsible section
 with st.expander("📝 Mermaid Code — copy to use in docs, Notion, or GitHub"):
     st.code(mermaid_code, language="text")
