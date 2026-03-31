@@ -436,7 +436,7 @@ mermaid_code = generate_mermaid(pattern, scores, manually_added, manually_remove
 diagram_summary = generate_diagram_summary(pattern, scores, manually_added, manually_removed, st.session_state.analysis)
 
 # Mermaid config — wider node spacing for clarity
-_mermaid_init = "{{startOnLoad:true,theme:'dark',flowchart:{{useMaxWidth:true,curve:'basis',nodeSpacing:30,rankSpacing:60}},themeVariables:{{primaryColor:'#0F766E',primaryTextColor:'#fff',primaryBorderColor:'#0D9488',lineColor:'#94A3B8',secondaryColor:'#1E293B',tertiaryColor:'#0F172A',edgeLabelBackground:'#1E293B'}}}}"
+_mermaid_init = "{{startOnLoad:true,theme:'dark',flowchart:{{useMaxWidth:true,curve:'basis',nodeSpacing:30,rankSpacing:60}},themeVariables:{{primaryColor:'#0F766E',primaryTextColor:'#fff',primaryBorderColor:'#0D9488',lineColor:'#FFFFFF',secondaryColor:'#1E293B',tertiaryColor:'#0F172A',edgeLabelBackground:'#1E293B'}}}}"
 
 # Count nodes for height calculation
 _node_count = sum(1 for l in mermaid_code.splitlines() if '[' in l and ']' in l)
