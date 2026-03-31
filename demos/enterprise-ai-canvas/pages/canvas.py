@@ -432,6 +432,11 @@ st.markdown(
 )
 
 mermaid_code = generate_mermaid(pattern, scores, manually_added, manually_removed, st.session_state.analysis)
+
+# Dynamic height: count nodes and edges to size the container
+_mermaid_lines = [l.strip() for l in mermaid_code.strip().splitlines() if l.strip()]
+_num_elements = sum(1 for l in _mermaid_lines if '-->' in l or '-.->' in l or ('[' in l and ']' in l))
+_diagram_height = max(520, 300 + _num_elements * 40)
 diagram_summary = generate_diagram_summary(pattern, scores, manually_added, manually_removed, st.session_state.analysis)
 
 # Render the Mermaid diagram in a styled container
@@ -447,8 +452,8 @@ diagram_html = f"""<div style="background:#0F172A;border-radius:12px;padding:24p
 st.components.v1.html(
     f"""
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-    <script>mermaid.initialize({{startOnLoad: true, theme: 'dark', themeVariables: {{primaryColor: '#0F766E', primaryTextColor: '#fff', primaryBorderColor: '#0D9488', lineColor: '#94A3B8', secondaryColor: '#1E293B', tertiaryColor: '#0F172A'}}}});</script>
-    <div style="background:#0F172A;border-radius:12px;padding:24px;font-family:-apple-system,BlinkMacSystemFont,sans-serif">
+    <script>mermaid.initialize({{startOnLoad: true, theme: 'dark', flowchart: {{useMaxWidth: true}}, themeVariables: {{primaryColor: '#0F766E', primaryTextColor: '#fff', primaryBorderColor: '#0D9488', lineColor: '#94A3B8', secondaryColor: '#1E293B', tertiaryColor: '#0F172A'}}}});</script>
+    <div style="background:#0F172A;border-radius:12px;padding:24px;font-family:-apple-system,BlinkMacSystemFont,sans-serif;overflow:auto">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
         <span style="font-size:14px;font-weight:700;color:#E2E8F0">{pattern}</span>
         <span style="font-size:10px;font-weight:600;color:#94A3B8;background:#1E293B;padding:2px 8px;border-radius:4px">AUTO-GENERATED</span>
@@ -458,7 +463,7 @@ st.components.v1.html(
       </div>
     </div>
     """,
-    height=520,
+    height=_diagram_height,
 )
 
 # Show the stack summary beside/below the diagram
