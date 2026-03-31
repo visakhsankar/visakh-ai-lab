@@ -15,6 +15,7 @@ from core.recommender import (
     STATUS_RECOMMENDED, STATUS_AVAILABLE, STATUS_NOT_RECOMMENDED,
     STATUS_MANUALLY_ADDED, STATUS_MANUALLY_REMOVED,
 )
+from core.diagram import generate_mermaid, generate_diagram_summary
 from ui.components import (
     render_header, render_analysis_summary, render_capability_card,
     render_pattern_badge, render_architecture_summary, render_signal_chips,
@@ -418,3 +419,52 @@ if st.session_state.interrogating:
 st.markdown("<br>", unsafe_allow_html=True)
 st.divider()
 render_architecture_summary(scores, manually_added, manually_removed, pattern, st.session_state.analysis)
+
+# ══════════════════════════════════════════════════════════════════════════════
+# SECTION 5 — ARCHITECTURE DIAGRAM (Mermaid)
+# ══════════════════════════════════════════════════════════════════════════════
+
+st.markdown("<br>", unsafe_allow_html=True)
+st.markdown(
+    f'<div style="font-size:11px;font-weight:800;color:{TEAL};text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px">ARCHITECTURE DIAGRAM</div>'
+    f'<p style="font-size:13px;color:{MUTED};margin-bottom:12px">Visual representation of your recommended architecture — layers, components, and data flow based on the detected pattern.</p>',
+    unsafe_allow_html=True,
+)
+
+mermaid_code = generate_mermaid(pattern, scores, manually_added, manually_removed, st.session_state.analysis)
+diagram_summary = generate_diagram_summary(pattern, scores, manually_added, manually_removed, st.session_state.analysis)
+
+# Render the Mermaid diagram in a styled container
+diagram_html = f"""<div style="background:#0F172A;border-radius:12px;padding:24px;border:1px solid #1E293B">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
+<span style="font-size:14px;font-weight:700;color:#E2E8F0">{pattern}</span>
+<span style="font-size:10px;font-weight:600;color:#94A3B8;background:#1E293B;padding:2px 8px;border-radius:4px">AUTO-GENERATED</span>
+</div>
+<div class="mermaid" style="text-align:center">{mermaid_code}</div>
+</div>"""
+
+# Inject Mermaid JS and render
+st.components.v1.html(
+    f"""
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({{startOnLoad: true, theme: 'dark', themeVariables: {{primaryColor: '#0F766E', primaryTextColor: '#fff', primaryBorderColor: '#0D9488', lineColor: '#94A3B8', secondaryColor: '#1E293B', tertiaryColor: '#0F172A'}}}});</script>
+    <div style="background:#0F172A;border-radius:12px;padding:24px;font-family:-apple-system,BlinkMacSystemFont,sans-serif">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
+        <span style="font-size:14px;font-weight:700;color:#E2E8F0">{pattern}</span>
+        <span style="font-size:10px;font-weight:600;color:#94A3B8;background:#1E293B;padding:2px 8px;border-radius:4px">AUTO-GENERATED</span>
+      </div>
+      <div class="mermaid">
+{mermaid_code}
+      </div>
+    </div>
+    """,
+    height=520,
+)
+
+# Show the stack summary beside/below the diagram
+with st.expander("📋 Stack Summary", expanded=True):
+    st.markdown(diagram_summary)
+
+# Show raw Mermaid code in a collapsible section
+with st.expander("📝 Mermaid Code — copy to use in docs, Notion, or GitHub"):
+    st.code(mermaid_code, language="text")
