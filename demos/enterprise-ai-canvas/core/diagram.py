@@ -124,7 +124,7 @@ def generate_mermaid(
             active_by_layer[layer_id] = active
 
     # Start building the Mermaid diagram
-    lines = ["graph LR"]
+    lines = ["graph TD"]
 
     # Add node definitions grouped by layer using subgraphs
     for layer_id in get_layers_ordered():

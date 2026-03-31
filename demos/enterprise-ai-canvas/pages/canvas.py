@@ -435,48 +435,75 @@ mermaid_code = generate_mermaid(pattern, scores, manually_added, manually_remove
 
 diagram_summary = generate_diagram_summary(pattern, scores, manually_added, manually_removed, st.session_state.analysis)
 
-# Shared Mermaid init config
-_mermaid_cfg = "{{startOnLoad:true,theme:'dark',flowchart:{{useMaxWidth:true,curve:'basis'}},themeVariables:{{primaryColor:'#0F766E',primaryTextColor:'#fff',primaryBorderColor:'#0D9488',lineColor:'#94A3B8',secondaryColor:'#1E293B',tertiaryColor:'#0F172A'}}}}"
+# Mermaid config — wider node spacing for clarity
+_mermaid_init = "{{startOnLoad:true,theme:'dark',flowchart:{{useMaxWidth:true,curve:'basis',nodeSpacing:30,rankSpacing:60}},themeVariables:{{primaryColor:'#0F766E',primaryTextColor:'#fff',primaryBorderColor:'#0D9488',lineColor:'#94A3B8',secondaryColor:'#1E293B',tertiaryColor:'#0F172A',edgeLabelBackground:'#1E293B'}}}}"
 
-# Inline preview (compact, scrollable)
+# Count nodes for height calculation
+_node_count = sum(1 for l in mermaid_code.splitlines() if '[' in l and ']' in l)
+_diagram_height = max(600, 200 + _node_count * 110)
+
+# Escape mermaid code for JS string embedding (replace backticks and backslashes)
+import json as _json
+_mermaid_js_safe = _json.dumps(mermaid_code)
+
 st.components.v1.html(
     f"""
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-    <script>mermaid.initialize({_mermaid_cfg});</script>
-    <div style="background:#0F172A;border-radius:12px;padding:24px;font-family:-apple-system,BlinkMacSystemFont,sans-serif;overflow:auto">
+    <script>mermaid.initialize({_mermaid_init});</script>
+    <div id="diagram-container" style="background:#0F172A;border-radius:12px;padding:24px;font-family:-apple-system,BlinkMacSystemFont,sans-serif;overflow:auto">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
         <div style="display:flex;align-items:center;gap:8px">
           <span style="font-size:14px;font-weight:700;color:#E2E8F0">{pattern}</span>
           <span style="font-size:10px;font-weight:600;color:#94A3B8;background:#1E293B;padding:2px 8px;border-radius:4px">AUTO-GENERATED</span>
         </div>
-        <button onclick="openDiagram()" style="background:#1E293B;color:#94A3B8;border:1px solid #334155;border-radius:6px;padding:4px 12px;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px"
+        <button onclick="openFullScreen()" style="background:#1E293B;color:#94A3B8;border:1px solid #334155;border-radius:6px;padding:4px 12px;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px"
           onmouseover="this.style.background='#334155';this.style.color='#E2E8F0'"
           onmouseout="this.style.background='#1E293B';this.style.color='#94A3B8'">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
           Full Screen
         </button>
       </div>
-      <div class="mermaid">
+      <div class="mermaid" style="text-align:center">
 {mermaid_code}
       </div>
     </div>
     <script>
-    function openDiagram() {{
+    function openFullScreen() {{
+      // Grab the rendered SVG from the inline diagram
+      var svg = document.querySelector('#diagram-container .mermaid svg');
+      if (!svg) return;
+      var svgMarkup = svg.outerHTML;
+
       var w = window.open('', '_blank');
-      w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>{pattern} — Architecture Diagram</title>
-        <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"><\\/script>
-        <style>body{{margin:0;background:#0F172A;display:flex;flex-direction:column;align-items:center;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,sans-serif}}
-        .header{{padding:24px 32px;width:100%;box-sizing:border-box;display:flex;align-items:center;gap:12px}}
-        .header h1{{color:#E2E8F0;font-size:18px;margin:0}} .header span{{font-size:10px;font-weight:600;color:#94A3B8;background:#1E293B;padding:2px 8px;border-radius:4px}}
-        .diagram{{padding:32px;width:100%;box-sizing:border-box;display:flex;justify-content:center}}</style></head>
-        <body><div class="header"><h1>{pattern}</h1><span>AUTO-GENERATED</span></div>
-        <div class="diagram"><div class="mermaid">{mermaid_code}</div></div>
-        <script>mermaid.initialize({_mermaid_cfg});<\\/script></body></html>`);
+      w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8">'+
+        '<title>{pattern} — Architecture Diagram</title>'+
+        '<style>'+
+        '*{{margin:0;padding:0;box-sizing:border-box}}'+
+        'body{{background:#0F172A;font-family:-apple-system,BlinkMacSystemFont,sans-serif;overflow:hidden}}'+
+        '.toolbar{{position:fixed;top:0;left:0;right:0;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;background:#0F172A;border-bottom:1px solid #1E293B;z-index:10}}'+
+        '.toolbar h1{{color:#E2E8F0;font-size:16px;font-weight:700}}'+
+        '.toolbar .badge{{font-size:10px;font-weight:600;color:#94A3B8;background:#1E293B;padding:2px 8px;border-radius:4px;margin-left:8px}}'+
+        '.toolbar .controls{{display:flex;gap:8px}}'+
+        '.toolbar button{{background:#1E293B;color:#E2E8F0;border:1px solid #334155;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer}}'+
+        '.toolbar button:hover{{background:#334155}}'+
+        '.canvas{{position:absolute;top:56px;left:0;right:0;bottom:0;overflow:auto;display:flex;align-items:center;justify-content:center}}'+
+        '.canvas svg{{min-width:90vw;height:auto;padding:40px}}'+
+        '</style></head><body>'+
+        '<div class="toolbar"><div style="display:flex;align-items:center"><h1>{pattern}</h1><span class="badge">AUTO-GENERATED</span></div>'+
+        '<div class="controls">'+
+        '<button onclick="zoom(0.8)">&#x2212; Zoom Out</button>'+
+        '<button onclick="zoom(1.25)">&#x2b; Zoom In</button>'+
+        '<button onclick="resetZoom()">Reset</button>'+
+        '</div></div>'+
+        '<div class="canvas" id="cv">'+svgMarkup+'</div>'+
+        '<script>var scale=1;function zoom(f){{scale*=f;var s=document.querySelector("#cv svg");s.style.transform="scale("+scale+")";s.style.transformOrigin="center top"}}'+
+        'function resetZoom(){{scale=1;var s=document.querySelector("#cv svg");s.style.transform="scale(1)"}}<\\/script>'+
+        '</body></html>');
       w.document.close();
     }}
     </script>
     """,
-    height=500,
+    height=_diagram_height,
 )
 
 # Stack summary and raw code
