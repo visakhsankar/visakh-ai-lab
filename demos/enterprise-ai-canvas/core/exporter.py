@@ -68,7 +68,7 @@ def generate_pdf(
     # Pattern subtitle
     pdf.set_font("Helvetica", "B", 14)
     pdf.set_text_color(*TEAL)
-    pdf.cell(0, 10, pattern, ln=True)
+    pdf.cell(0, 10, _strip_emoji(pattern), ln=True)
 
     # Divider
     pdf.set_draw_color(*TEAL)
@@ -99,7 +99,7 @@ def generate_pdf(
         pdf.cell(0, 6, f"{label}:", ln=True)
         pdf.set_font("Helvetica", "", 9)
         pdf.set_text_color(71, 85, 105)  # slate-600
-        pdf.multi_cell(0, 5, str(value or "N/A"))
+        pdf.multi_cell(0, 5, _strip_emoji(str(value or "N/A")))
         pdf.ln(1)
 
     pdf.set_font("Helvetica", "B", 9)
@@ -107,7 +107,7 @@ def generate_pdf(
     pdf.cell(0, 6, "Reasoning:", ln=True)
     pdf.set_font("Helvetica", "", 9)
     pdf.set_text_color(71, 85, 105)
-    pdf.multi_cell(0, 5, str(analysis.get("reasoning", "N/A")))
+    pdf.multi_cell(0, 5, _strip_emoji(str(analysis.get("reasoning", "N/A"))))
     pdf.ln(2)
 
     pdf.set_font("Helvetica", "B", 9)
@@ -116,7 +116,7 @@ def generate_pdf(
     pdf.set_font("Helvetica", "", 8)
     pdf.set_text_color(71, 85, 105)
     signals_text = ", ".join(s.replace("_", " ") for s in analysis.get("signals", []))
-    pdf.multi_cell(0, 5, signals_text or "None detected")
+    pdf.multi_cell(0, 5, _strip_emoji(signals_text or "None detected"))
 
     # ── Constraints ──────────────────────────────────────────────────────────
 
@@ -139,7 +139,7 @@ def generate_pdf(
             if not c:
                 continue
             pdf.set_text_color(*NAVY)
-            pdf.cell(80, 6, f"  {c['label']}", border=0)
+            pdf.cell(80, 6, f"  {_strip_emoji(c['label'])}", border=0)
             # Type badge
             is_hard = c["type"] == "hard"
             pdf.set_text_color(220, 38, 38) if is_hard else pdf.set_text_color(217, 119, 6)
@@ -155,7 +155,7 @@ def generate_pdf(
     # ── Data Flow ────────────────────────────────────────────────────────────
 
     pdf.ln(6)
-    _section_header(pdf, f"DATA FLOW — {pattern.upper()}")
+    _section_header(pdf, f"DATA FLOW - {pattern.upper()}")
 
     flows = PATTERN_FLOWS.get(pattern, PATTERN_FLOWS["Direct Prompting"])
     active_ids = set(active_by_layer.keys())
@@ -286,5 +286,5 @@ def _section_header(pdf: _BriefPDF, title: str):
     pdf.set_line_width(1)
     pdf.line(20, y, 20, y + 6)
     pdf.cell(4, 6, "")
-    pdf.cell(0, 6, title, ln=True)
+    pdf.cell(0, 6, _strip_emoji(title), ln=True)
     pdf.ln(3)
