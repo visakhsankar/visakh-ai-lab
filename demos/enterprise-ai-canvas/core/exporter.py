@@ -271,7 +271,7 @@ def generate_pdf(
             else:
                 pdf.line(sx - 2, s_top, dx - 2, d_bot)
 
-    return pdf.output()
+    return bytes(pdf.output())
 
 
 def _section_header(pdf: _BriefPDF, title: str):
