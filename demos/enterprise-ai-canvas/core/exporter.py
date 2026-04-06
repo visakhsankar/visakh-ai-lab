@@ -14,10 +14,8 @@ def _hex_to_rgb(h: str) -> tuple[int, int, int]:
 
 
 def _strip_emoji(text: str) -> str:
-    """Remove emoji and non-Latin characters that Helvetica can't render."""
-    import re
-    # Keep ASCII + Latin-1 Supplement + common punctuation
-    return re.sub(r'[^\x20-\x7E\xA0-\xFF]', '', text).strip()
+    """Remove all non-ASCII characters that Helvetica can't render."""
+    return text.encode('ascii', 'ignore').decode('ascii').strip()
 
 
 NAVY = (15, 23, 42)       # #0F172A
