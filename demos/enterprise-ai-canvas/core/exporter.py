@@ -13,6 +13,13 @@ def _hex_to_rgb(h: str) -> tuple[int, int, int]:
     return int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
 
 
+def _strip_emoji(text: str) -> str:
+    """Remove emoji and non-Latin characters that Helvetica can't render."""
+    import re
+    # Keep ASCII + Latin-1 Supplement + common punctuation
+    return re.sub(r'[^\x20-\x7E\xA0-\xFF]', '', text).strip()
+
+
 NAVY = (15, 23, 42)       # #0F172A
 SLATE = (30, 41, 59)      # #1E293B
 TEXT_LIGHT = (226, 232, 240)  # #E2E8F0
@@ -89,23 +96,23 @@ def generate_pdf(
     for label, value in fields:
         pdf.set_font("Helvetica", "B", 9)
         pdf.set_text_color(*NAVY)
-        pdf.cell(35, 6, f"{label}:")
+        pdf.cell(0, 6, f"{label}:", ln=True)
         pdf.set_font("Helvetica", "", 9)
         pdf.set_text_color(71, 85, 105)  # slate-600
-        pdf.multi_cell(0, 6, value)
+        pdf.multi_cell(0, 5, str(value or "N/A"))
+        pdf.ln(1)
 
-    pdf.ln(3)
     pdf.set_font("Helvetica", "B", 9)
     pdf.set_text_color(*NAVY)
-    pdf.cell(35, 6, "Reasoning:")
+    pdf.cell(0, 6, "Reasoning:", ln=True)
     pdf.set_font("Helvetica", "", 9)
     pdf.set_text_color(71, 85, 105)
-    pdf.multi_cell(0, 5, analysis.get("reasoning", "N/A"))
+    pdf.multi_cell(0, 5, str(analysis.get("reasoning", "N/A")))
+    pdf.ln(2)
 
-    pdf.ln(3)
     pdf.set_font("Helvetica", "B", 9)
     pdf.set_text_color(*NAVY)
-    pdf.cell(35, 6, "Signals:")
+    pdf.cell(0, 6, "Signals:", ln=True)
     pdf.set_font("Helvetica", "", 8)
     pdf.set_text_color(71, 85, 105)
     signals_text = ", ".join(s.replace("_", " ") for s in analysis.get("signals", []))
@@ -185,7 +192,7 @@ def generate_pdf(
         pdf.set_fill_color(r, g, b)
         pdf.set_text_color(*WHITE)
         pdf.set_font("Helvetica", "B", 10)
-        pdf.cell(0, 8, f"  {layer['icon']}  {layer['name']}  ({len(caps)} selected)", ln=True, fill=True)
+        pdf.cell(0, 8, f"  {_strip_emoji(layer['name'])}  ({len(caps)} selected)", ln=True, fill=True)
         pdf.ln(2)
 
         # Capabilities
@@ -195,19 +202,18 @@ def generate_pdf(
 
             pdf.set_font("Helvetica", "B", 9)
             pdf.set_text_color(*NAVY)
-            pdf.cell(0, 5, f"  {c['name']}", ln=True)
+            pdf.cell(0, 5, f"  {_strip_emoji(c['name'])}", ln=True)
 
             pdf.set_font("Helvetica", "", 8)
             pdf.set_text_color(71, 85, 105)
-            pdf.cell(8, 5, "")
-            pdf.cell(0, 5, f"{c['vendor']}  |  Cost: {c['trade_offs']['cost']}  |  Quality: {c['trade_offs']['quality']}  |  Latency: {c['trade_offs']['latency']}", ln=True)
+            trade = c["trade_offs"]
+            pdf.cell(0, 5, f"    {c['vendor']}  |  Cost: {trade['cost']}  |  Quality: {trade['quality']}  |  Latency: {trade['latency']}", ln=True)
 
             # Description (truncated)
-            desc = c["description"][:200]
+            desc = _strip_emoji(c["description"][:200])
             pdf.set_font("Helvetica", "", 7.5)
             pdf.set_text_color(*TEXT_MUTED)
-            pdf.cell(8, 4, "")
-            pdf.multi_cell(0, 4, desc)
+            pdf.multi_cell(0, 4, f"    {desc}")
             pdf.ln(2)
 
         pdf.ln(3)
@@ -242,10 +248,10 @@ def generate_pdf(
         pdf.set_xy(start_x, y + 1)
         pdf.set_font("Helvetica", "B", 8)
         pdf.set_text_color(*WHITE)
-        cap_text = ", ".join(c["name"] for c in caps[:3])
+        cap_text = ", ".join(_strip_emoji(c["name"]) for c in caps[:3])
         if len(caps) > 3:
             cap_text += f" +{len(caps) - 3}"
-        pdf.cell(box_w, 5, f"{layer['icon']}  {layer['name']}", align="C")
+        pdf.cell(box_w, 5, _strip_emoji(layer["name"]), align="C")
         pdf.set_xy(start_x, y + 6)
         pdf.set_font("Helvetica", "", 6.5)
         pdf.set_text_color(220, 220, 220)
