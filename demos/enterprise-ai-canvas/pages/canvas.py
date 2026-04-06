@@ -15,7 +15,7 @@ from core.recommender import (
     STATUS_RECOMMENDED, STATUS_AVAILABLE, STATUS_NOT_RECOMMENDED,
     STATUS_MANUALLY_ADDED, STATUS_MANUALLY_REMOVED,
 )
-from core.diagram import generate_mermaid, generate_diagram_summary
+from core.diagram import generate_mermaid, generate_diagram_summary, generate_html_diagram, compute_diff, LAYER_COLORS
 from ui.components import (
     render_header, render_analysis_summary, render_capability_card,
     render_pattern_badge, render_architecture_summary, render_signal_chips,
@@ -44,6 +44,7 @@ defaults = {
     "scores": {}, "manually_added": set(), "manually_removed": set(),
     "interrogating": None, "interrog_answers": {},
     "show_not_recommended": {}, "analysis_count": 0, "author_mode": False,
+    "snapshots": {}, "comparing": False,
 }
 for k, v in defaults.items():
     if k not in st.session_state:
@@ -421,94 +422,156 @@ st.divider()
 render_architecture_summary(scores, manually_added, manually_removed, pattern, st.session_state.analysis)
 
 # ══════════════════════════════════════════════════════════════════════════════
-# SECTION 5 — ARCHITECTURE DIAGRAM (Mermaid)
+# SECTION 5 — ARCHITECTURE DIAGRAM (Interactive HTML)
 # ══════════════════════════════════════════════════════════════════════════════
 
 st.markdown("<br>", unsafe_allow_html=True)
 st.markdown(
     f'<div style="font-size:11px;font-weight:800;color:{TEAL};text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px">ARCHITECTURE DIAGRAM</div>'
-    f'<p style="font-size:13px;color:{MUTED};margin-bottom:12px">Visual representation of your recommended architecture — layers, components, and data flow based on the detected pattern.</p>',
+    f'<p style="font-size:13px;color:{MUTED};margin-bottom:12px">Visual representation of your recommended architecture — hover on layers for details. Click Full Screen for a zoomable view.</p>',
     unsafe_allow_html=True,
 )
 
+html_diagram = generate_html_diagram(pattern, scores, manually_added, manually_removed, st.session_state.analysis)
+diagram_summary = generate_diagram_summary(pattern, scores, manually_added, manually_removed, st.session_state.analysis)
 mermaid_code = generate_mermaid(pattern, scores, manually_added, manually_removed, st.session_state.analysis)
 
-diagram_summary = generate_diagram_summary(pattern, scores, manually_added, manually_removed, st.session_state.analysis)
-
-# Mermaid config — wider node spacing for clarity
-_mermaid_init = "{{startOnLoad:true,theme:'base',flowchart:{{useMaxWidth:true,curve:'basis',nodeSpacing:30,rankSpacing:60}},themeVariables:{{primaryColor:'#0F766E',primaryTextColor:'#fff',primaryBorderColor:'#0D9488',lineColor:'#FFFFFF',arrowheadColor:'#FFFFFF',mainBkg:'#1E293B',nodeBorder:'#334155',clusterBkg:'#0F172A',clusterBorder:'#334155',titleColor:'#E2E8F0',edgeLabelBackground:'#1E293B',textColor:'#E2E8F0',secondaryColor:'#1E293B',tertiaryColor:'#0F172A'}}}}"
-
-# Count nodes for height calculation
-_node_count = sum(1 for l in mermaid_code.splitlines() if '[' in l and ']' in l)
-_diagram_height = max(600, 200 + _node_count * 110)
-
-# Escape mermaid code for JS string embedding (replace backticks and backslashes)
-import json as _json
-_mermaid_js_safe = _json.dumps(mermaid_code)
-
-st.components.v1.html(
-    f"""
-    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-    <script>mermaid.initialize({_mermaid_init});</script>
-    <div id="diagram-container" style="background:#0F172A;border-radius:12px;padding:24px;font-family:-apple-system,BlinkMacSystemFont,sans-serif;overflow:auto">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-        <div style="display:flex;align-items:center;gap:8px">
-          <span style="font-size:14px;font-weight:700;color:#E2E8F0">{pattern}</span>
-          <span style="font-size:10px;font-weight:600;color:#94A3B8;background:#1E293B;padding:2px 8px;border-radius:4px">AUTO-GENERATED</span>
-        </div>
-        <button onclick="openFullScreen()" style="background:#1E293B;color:#94A3B8;border:1px solid #334155;border-radius:6px;padding:4px 12px;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px"
-          onmouseover="this.style.background='#334155';this.style.color='#E2E8F0'"
-          onmouseout="this.style.background='#1E293B';this.style.color='#94A3B8'">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
-          Full Screen
-        </button>
-      </div>
-      <div class="mermaid" style="text-align:center">
-{mermaid_code}
-      </div>
-    </div>
-    <script>
-    function openFullScreen() {{
-      // Grab the rendered SVG from the inline diagram
-      var svg = document.querySelector('#diagram-container .mermaid svg');
-      if (!svg) return;
-      var svgMarkup = svg.outerHTML;
-
-      var w = window.open('', '_blank');
-      w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8">'+
-        '<title>{pattern} — Architecture Diagram</title>'+
-        '<style>'+
-        '*{{margin:0;padding:0;box-sizing:border-box}}'+
-        'body{{background:#0F172A;font-family:-apple-system,BlinkMacSystemFont,sans-serif;overflow:hidden}}'+
-        '.toolbar{{position:fixed;top:0;left:0;right:0;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;background:#0F172A;border-bottom:1px solid #1E293B;z-index:10}}'+
-        '.toolbar h1{{color:#E2E8F0;font-size:16px;font-weight:700}}'+
-        '.toolbar .badge{{font-size:10px;font-weight:600;color:#94A3B8;background:#1E293B;padding:2px 8px;border-radius:4px;margin-left:8px}}'+
-        '.toolbar .controls{{display:flex;gap:8px}}'+
-        '.toolbar button{{background:#1E293B;color:#E2E8F0;border:1px solid #334155;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer}}'+
-        '.toolbar button:hover{{background:#334155}}'+
-        '.canvas{{position:absolute;top:56px;left:0;right:0;bottom:0;overflow:auto;display:flex;align-items:center;justify-content:center}}'+
-        '.canvas svg{{min-width:90vw;height:auto;padding:40px}}'+
-        '</style></head><body>'+
-        '<div class="toolbar"><div style="display:flex;align-items:center"><h1>{pattern}</h1><span class="badge">AUTO-GENERATED</span></div>'+
-        '<div class="controls">'+
-        '<button onclick="zoom(0.8)">&#x2212; Zoom Out</button>'+
-        '<button onclick="zoom(1.25)">&#x2b; Zoom In</button>'+
-        '<button onclick="resetZoom()">Reset</button>'+
-        '</div></div>'+
-        '<div class="canvas" id="cv">'+svgMarkup+'</div>'+
-        '<script>var scale=1;function zoom(f){{scale*=f;var s=document.querySelector("#cv svg");s.style.transform="scale("+scale+")";s.style.transformOrigin="center top"}}'+
-        'function resetZoom(){{scale=1;var s=document.querySelector("#cv svg");s.style.transform="scale(1)"}}<\\/script>'+
-        '</body></html>');
-      w.document.close();
-    }}
-    </script>
-    """,
-    height=_diagram_height,
+# Height based on active layer count
+_active_layer_count = sum(
+    1 for lid in get_layers_ordered()
+    if any(get_status(c["id"], scores.get(c["id"], 50), manually_added, manually_removed)
+           in (STATUS_RECOMMENDED, STATUS_MANUALLY_ADDED) for c in get_caps_for_layer(lid))
 )
+_diagram_height = max(500, 120 + _active_layer_count * 120)
 
-# Stack summary and raw code
+st.components.v1.html(html_diagram, height=_diagram_height)
+
+# Stack summary and export options
 with st.expander("📋 Stack Summary", expanded=True):
     st.markdown(diagram_summary)
 
 with st.expander("📝 Mermaid Code — copy to use in docs, Notion, or GitHub"):
     st.code(mermaid_code, language="text")
+
+# ══════════════════════════════════════════════════════════════════════════════
+# SECTION 6 — EXPORT & SNAPSHOT
+# ══════════════════════════════════════════════════════════════════════════════
+
+st.markdown("<br>", unsafe_allow_html=True)
+
+from core.exporter import generate_pdf
+import datetime
+
+col_export, col_snap = st.columns(2)
+
+with col_export:
+    pdf_bytes = generate_pdf(
+        pattern=pattern,
+        scores=scores,
+        manually_added=manually_added,
+        manually_removed=manually_removed,
+        analysis=st.session_state.analysis,
+        active_constraints=st.session_state.active_constraints,
+    )
+    safe_name = pattern.lower().replace(" ", "-").replace("+", "")
+    st.download_button(
+        label="📄 Export Architecture Brief (PDF)",
+        data=pdf_bytes,
+        file_name=f"ai-canvas-{safe_name}.pdf",
+        mime="application/pdf",
+        use_container_width=True,
+    )
+
+with col_snap:
+    snap_count = len(st.session_state.snapshots)
+    default_name = f"v{snap_count + 1}"
+    snap_name = st.text_input("Snapshot name", value=default_name, label_visibility="collapsed", placeholder="Snapshot name...")
+    if st.button("📸 Save Snapshot", use_container_width=True):
+        st.session_state.snapshots[snap_name] = {
+            "pattern": pattern,
+            "scores": dict(scores),
+            "manually_added": set(manually_added),
+            "manually_removed": set(manually_removed),
+            "active_constraints": set(st.session_state.active_constraints),
+            "analysis": dict(st.session_state.analysis) if st.session_state.analysis else {},
+            "timestamp": datetime.datetime.now().strftime("%H:%M:%S"),
+        }
+        st.toast(f"Snapshot '{snap_name}' saved!")
+
+# ══════════════════════════════════════════════════════════════════════════════
+# SECTION 7 — COMPARE ARCHITECTURES
+# ══════════════════════════════════════════════════════════════════════════════
+
+if len(st.session_state.snapshots) >= 2:
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown(
+        f'<div style="font-size:11px;font-weight:800;color:{TEAL};text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px">COMPARE ARCHITECTURES</div>'
+        f'<p style="font-size:13px;color:{MUTED};margin-bottom:12px">Compare two saved snapshots to see what changed — patterns, capabilities, and constraints.</p>',
+        unsafe_allow_html=True,
+    )
+
+    snap_names = list(st.session_state.snapshots.keys())
+    col_a, col_b = st.columns(2)
+    with col_a:
+        name_a = st.selectbox("Snapshot A", snap_names, index=0, key="cmp_a")
+    with col_b:
+        default_b = min(1, len(snap_names) - 1)
+        name_b = st.selectbox("Snapshot B", snap_names, index=default_b, key="cmp_b")
+
+    if name_a != name_b:
+        snap_a = st.session_state.snapshots[name_a]
+        snap_b = st.session_state.snapshots[name_b]
+        diff = compute_diff(snap_a, snap_b)
+
+        # Summary metrics
+        m1, m2, m3 = st.columns(3)
+        delta_caps = diff["total_b"] - diff["total_a"]
+        delta_sign = "+" if delta_caps > 0 else ""
+        with m1:
+            st.metric("Capabilities", f"{diff['total_a']} → {diff['total_b']}", f"{delta_sign}{delta_caps}")
+        with m2:
+            if diff["pattern_changed"]:
+                st.metric("Pattern", diff["pattern_b"], f"was {diff['pattern_a']}")
+            else:
+                st.metric("Pattern", diff["pattern_a"], "unchanged")
+        with m3:
+            c_added = len(diff["constraints_added"])
+            c_removed = len(diff["constraints_removed"])
+            st.metric("Constraints", f"+{c_added} / -{c_removed}")
+
+        # Per-layer diff
+        if diff["layer_diffs"]:
+            for lid, ld in diff["layer_diffs"].items():
+                layer = LAYER_REGISTRY[lid]
+                colors = LAYER_COLORS[lid]
+
+                pills = []
+                for cid in sorted(ld["added"]):
+                    cap = CAPABILITY_REGISTRY.get(cid, {})
+                    pills.append(f'<span style="background:#065F46;color:#A7F3D0;padding:2px 8px;border-radius:12px;font-size:11px;margin:2px">+ {cap.get("name", cid)}</span>')
+                for cid in sorted(ld["removed"]):
+                    cap = CAPABILITY_REGISTRY.get(cid, {})
+                    pills.append(f'<span style="background:#7F1D1D;color:#FCA5A5;padding:2px 8px;border-radius:12px;font-size:11px;margin:2px">- {cap.get("name", cid)}</span>')
+                for cid in sorted(ld["unchanged"]):
+                    cap = CAPABILITY_REGISTRY.get(cid, {})
+                    pills.append(f'<span style="background:#1E293B;color:#94A3B8;padding:2px 8px;border-radius:12px;font-size:11px;margin:2px">{cap.get("name", cid)}</span>')
+
+                st.markdown(
+                    f'<div style="margin:8px 0 4px"><span style="font-size:12px;font-weight:700;color:{colors["bg"]}">{layer["icon"]} {layer["name"]}</span></div>'
+                    f'<div style="display:flex;flex-wrap:wrap;gap:4px">{"".join(pills)}</div>',
+                    unsafe_allow_html=True,
+                )
+
+        # Constraint diff
+        if diff["constraints_added"] or diff["constraints_removed"]:
+            st.markdown(f'<div style="margin:12px 0 4px;font-size:12px;font-weight:700;color:{TEAL}">Constraint Changes</div>', unsafe_allow_html=True)
+            c_pills = []
+            for cid in sorted(diff["constraints_added"]):
+                c = CONSTRAINT_REGISTRY.get(cid, {})
+                c_pills.append(f'<span style="background:#065F46;color:#A7F3D0;padding:2px 8px;border-radius:12px;font-size:11px;margin:2px">+ {c.get("label", cid)}</span>')
+            for cid in sorted(diff["constraints_removed"]):
+                c = CONSTRAINT_REGISTRY.get(cid, {})
+                c_pills.append(f'<span style="background:#7F1D1D;color:#FCA5A5;padding:2px 8px;border-radius:12px;font-size:11px;margin:2px">- {c.get("label", cid)}</span>')
+            st.markdown(f'<div style="display:flex;flex-wrap:wrap;gap:4px">{"".join(c_pills)}</div>', unsafe_allow_html=True)
+    else:
+        st.info("Select two different snapshots to compare.")
